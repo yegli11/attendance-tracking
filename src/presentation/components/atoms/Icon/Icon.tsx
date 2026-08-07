@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import styles from './Icon.module.css'
 
 const ICON_PATHS: Record<IconName, ReactNode> = {
   calendar: (
@@ -52,9 +51,48 @@ const ICON_PATHS: Record<IconName, ReactNode> = {
       <line x1="2" y1="2" x2="22" y2="22" />
     </>
   ),
+  check: <polyline points="20 6 9 17 4 12" />,
+  close: (
+    <>
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </>
+  ),
+  plus: (
+    <>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </>
+  ),
+  search: (
+    <>
+      <circle cx="11" cy="11" r="8" />
+      <line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </>
+  ),
+  logout: (
+    <>
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </>
+  ),
 }
 
-export type IconName = 'calendar' | 'user' | 'users' | 'flame' | 'mail' | 'lock' | 'eye' | 'eyeOff'
+export type IconName =
+  | 'calendar'
+  | 'user'
+  | 'users'
+  | 'flame'
+  | 'mail'
+  | 'lock'
+  | 'eye'
+  | 'eyeOff'
+  | 'check'
+  | 'close'
+  | 'plus'
+  | 'search'
+  | 'logout'
 
 interface Props {
   name: IconName
@@ -64,7 +102,7 @@ interface Props {
 export function Icon({ name, size = 18 }: Props) {
   return (
     <svg
-      className={styles.icon}
+      style={{ flexShrink: 0 }}
       width={size}
       height={size}
       viewBox="0 0 24 24"

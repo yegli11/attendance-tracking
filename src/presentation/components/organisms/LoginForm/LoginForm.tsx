@@ -1,8 +1,13 @@
 import { useState, type FormEvent } from 'react'
 import { ZodError } from 'zod'
+import Stack from '@mui/material/Stack'
+import TextField from '@mui/material/TextField'
+import InputAdornment from '@mui/material/InputAdornment'
+import IconButton from '@mui/material/IconButton'
+import Alert from '@mui/material/Alert'
+import Button from '@mui/material/Button'
 import { useAuth } from '@/presentation/hooks/useAuth'
 import { Icon } from '@/presentation/components/atoms/Icon'
-import styles from './LoginForm.module.css'
 
 export function LoginForm() {
   const { signIn } = useAuth()
@@ -30,53 +35,63 @@ export function LoginForm() {
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      <div className={styles.field}>
-        <label htmlFor="email">Correo electrónico</label>
-        <div className={styles.inputWrapper}>
-          <Icon name="mail" size={16} />
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            placeholder="tu@iglesia.com"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-        </div>
-      </div>
+    <Stack component="form" onSubmit={handleSubmit} noValidate spacing={2.5}>
+      <TextField
+        id="email"
+        label="Correo electrónico"
+        type="email"
+        autoComplete="email"
+        placeholder="tu@iglesia.com"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+        fullWidth
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <Icon name="mail" size={16} />
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
 
-      <div className={styles.field}>
-        <label htmlFor="password">Contraseña</label>
-        <div className={styles.inputWrapper}>
-          <Icon name="lock" size={16} />
-          <input
-            id="password"
-            type={isPasswordVisible ? 'text' : 'password'}
-            autoComplete="current-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
-          />
-          <button
-            type="button"
-            className={styles.toggleVisibility}
-            onClick={() => setIsPasswordVisible((visible) => !visible)}
-            aria-label={isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-          >
-            <Icon name={isPasswordVisible ? 'eyeOff' : 'eye'} size={16} />
-          </button>
-        </div>
-      </div>
+      <TextField
+        id="password"
+        label="Contraseña"
+        type={isPasswordVisible ? 'text' : 'password'}
+        autoComplete="current-password"
+        value={password}
+        onChange={(event) => setPassword(event.target.value)}
+        fullWidth
+        slotProps={{
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <Icon name="lock" size={16} />
+              </InputAdornment>
+            ),
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={() => setIsPasswordVisible((visible) => !visible)}
+                  aria-label={isPasswordVisible ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  edge="end"
+                  size="small"
+                >
+                  <Icon name={isPasswordVisible ? 'eyeOff' : 'eye'} size={16} />
+                </IconButton>
+              </InputAdornment>
+            ),
+          },
+        }}
+      />
 
-      {error && (
-        <p className={styles.error} role="alert">
-          {error}
-        </p>
-      )}
+      {error && <Alert severity="error">{error}</Alert>}
 
-      <button type="submit" className={styles.submit} disabled={isSubmitting}>
+      <Button type="submit" variant="contained" size="large" disabled={isSubmitting} fullWidth>
         {isSubmitting ? 'Ingresando…' : 'Iniciar sesión'}
-      </button>
-    </form>
+      </Button>
+    </Stack>
   )
 }
