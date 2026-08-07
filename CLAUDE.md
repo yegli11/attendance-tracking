@@ -1,13 +1,18 @@
-# CLAUDE.md — Registration System (Inscripción y Asistencia Infantil)
+# CLAUDE.md — Attendance Tracking (Inscripción y Asistencia Infantil)
 
 Reglas de trabajo para este proyecto. Léelas antes de generar o modificar código.
 
 ## 1. Resumen del proyecto
 
-App web para inscripción y control de asistencia de niños (ver referencia visual en
-`../attachment/concentracion-infantil.html` y modelo de datos en `../attachment/modelo-bbdd.jpg`).
-Stack actual: React 19 + TypeScript + Vite. Debe evolucionar como **PWA responsive** con
-**Supabase** como backend.
+PWA para que el staff de la iglesia inscriba niños en eventos y controle su asistencia
+(código de entrada por inscripción, búsqueda por código, roster con filtros y estadísticas en
+vivo). Soporta múltiples eventos y categorías — no un evento único fijo. Requiere sesión
+autenticada (Supabase Auth); no hay uso anónimo/kiosco.
+
+Stack: React 19 + TypeScript + Vite + React Router + Supabase. Identidad visual propia
+inspirada en la paleta de la iglesia (azul `#060773`, gris `#7B817F`, fondo `#F0F0F0`,
+tipografía Montserrat) — no se copia el diseño del prototipo funcional usado como referencia de
+comportamiento, solo su lógica (formularios, ticket con código, roster, check-in).
 
 ## 2. Idioma
 
@@ -53,6 +58,13 @@ src/
   main.tsx
 ```
 
+Importa con el alias `@/` (ej. `@/domain/entities/Event`) en vez de rutas relativas largas
+(`../../../..`); está configurado en `vite.config.ts` y `tsconfig.app.json`.
+
+Navegación con `react-router-dom` (`App.tsx` monta `BrowserRouter` + `Routes`); cada página vive
+en `presentation/components/pages/`. No usar estado de pestañas tipo SPA-sin-rutas como en el
+prototipo de referencia — cada vista debe tener una URL propia.
+
 Reglas de dependencia (de afuera hacia adentro, nunca al revés):
 
 - `domain/` no importa de ninguna otra capa.
@@ -84,13 +96,17 @@ Button/
 
 ## 5. PWA y responsive
 
-- Usar `vite-plugin-pwa` para manifest + service worker (estrategia `autoUpdate`).
+- Usar `vite-plugin-pwa` para manifest + service worker (estrategia `autoUpdate`), configurado en
+  `vite.config.ts`.
 - `manifest.webmanifest` con iconos en varios tamaños (192, 512, maskable), `theme_color` y
-  `background_color` acordes al diseño de referencia.
+  `background_color` acordes al diseño de referencia. Los iconos actuales (`public/pwa-icon.svg`)
+  son un placeholder de marca; reemplazar por artwork final (idealmente PNG/maskable) antes de
+  publicar.
 - Mobile-first: escribir estilos base para mobile y usar `min-width` media queries para escalar
   hacia arriba, no al revés.
-- Breakpoints centralizados (ej. `src/shared/constants/breakpoints.ts` o variables CSS en
-  `:root`), nunca números mágicos repetidos por archivo.
+- Breakpoints centralizados en `src/shared/constants/breakpoints.ts` (usar los mismos valores en
+  los `min-width` de los CSS Modules — las variables CSS no funcionan dentro de `@media`), nunca
+  números mágicos repetidos por archivo.
 - Layout con Flexbox/Grid, unidades relativas (`rem`, `%`, `clamp()`), imágenes con
   `max-width: 100%`.
 - Probar que la app sea instalable y funcione razonablemente offline (al menos shell cacheado)
@@ -98,6 +114,9 @@ Button/
 
 ## 6. Supabase
 
+- La app solo la opera staff autenticado (Supabase Auth); no hay flujo público/anónimo. Las
+  cuentas se crean manualmente (invitación desde el dashboard de Supabase), sin tabla de perfiles
+  propia — cualquier usuario autenticado cuenta como staff.
 - Un único cliente (`infrastructure/supabase/client.ts`), inicializado con variables de entorno
   (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). Nunca hardcodear keys.
 - `.env.local` fuera de git (verificar que esté en `.gitignore`); documentar variables requeridas
