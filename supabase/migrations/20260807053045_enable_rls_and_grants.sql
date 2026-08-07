@@ -11,9 +11,13 @@ grant select, insert, update, delete on all tables in schema event to authentica
 alter table event.category enable row level security;
 alter table event.event enable row level security;
 alter table event.registration enable row level security;
+alter table person.gender enable row level security;
 alter table person.person enable row level security;
 alter table person.contact enable row level security;
 alter table person.authorized_representative enable row level security;
+
+create policy "Staff can manage genders" on person.gender
+  for all to authenticated using (true) with check (true);
 
 create policy "Staff can manage categories" on event.category
   for all to authenticated using (true) with check (true);

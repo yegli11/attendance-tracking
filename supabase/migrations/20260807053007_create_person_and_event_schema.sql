@@ -3,19 +3,29 @@
 --   * person.contact.phone_number is text, not int (a phone number is not an
 --     arithmetic value: it can have a leading zero, a "+" country code, or exceed
 --     int32 range).
---   * "GENRE" in the diagram is a translation slip for gender; the column here is
---     named `gender` (correct English word) per the project's English-only code rule.
+--   * "GENRE" in the diagram is a translation slip for gender; person.person
+--     references a person.gender lookup table (not in the diagram) instead of a
+--     free-text column, so the value set is closed and consistent across rows.
 --   * event_date / attended_date use timestamptz instead of a bare date/datetime,
 --     so a single point in time is stored unambiguously across time zones.
 --   * every table gets a `created_at` audit column (not in the diagram).
+-- Static values for person.gender and event.category are seeded in the
+-- seed_data migration.
 
 create schema if not exists person;
 create schema if not exists event;
 
+-- ── person.gender ────────────────────────────────────────────────────────────
+create table person.gender (
+  id bigint generated always as identity primary key,
+  name varchar(50) not null unique,
+  created_at timestamptz not null default now()
+);
+
 -- ── event.category ──────────────────────────────────────────────────────────
 create table event.category (
   id bigint generated always as identity primary key,
-  name varchar(50) not null,
+  name varchar(50) not null unique,
   created_at timestamptz not null default now()
 );
 
@@ -35,10 +45,12 @@ create table person.person (
   id bigint generated always as identity primary key,
   name varchar(50) not null,
   last_name varchar(50) not null,
-  gender varchar(50) not null,
+  gender_id bigint not null references person.gender (id) on delete restrict,
   birthdate date not null,
   created_at timestamptz not null default now()
 );
+
+create index person_person_gender_id_idx on person.person (gender_id);
 
 -- ── person.contact ───────────────────────────────────────────────────────────
 create table person.contact (
