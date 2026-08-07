@@ -116,18 +116,30 @@ Button/
 
 - La app solo la opera staff autenticado (Supabase Auth); no hay flujo público/anónimo. Las
   cuentas se crean manualmente (invitación desde el dashboard de Supabase), sin tabla de perfiles
-  propia — cualquier usuario autenticado cuenta como staff.
+  propia — cualquier usuario autenticado cuenta como staff. `enable_signup` está deshabilitado en
+  `supabase/config.toml` para que nadie pueda auto-registrarse contra la anon key.
+- Esquema de datos en `supabase/migrations/` (dos esquemas Postgres, `person` y `event`, según el
+  diagrama de `dev/attachment/modelo-bbdd.jpg`): expuestos en la API vía `[api].schemas` en
+  `supabase/config.toml`. Al agregar tablas nuevas, crear una migración con
+  `npx supabase migration new <nombre>` — no editar migraciones ya aplicadas, crear una nueva.
 - Un único cliente (`infrastructure/supabase/client.ts`), inicializado con variables de entorno
-  (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). Nunca hardcodear keys.
-- `.env.local` fuera de git (verificar que esté en `.gitignore`); documentar variables requeridas
-  en `.env.example`.
+  (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`). Nunca hardcodear keys. Como las tablas viven en
+  `person`/`event` y no en `public`, cada repositorio debe llamar
+  `supabase.schema('person' | 'event').from(...)` explícitamente.
+- `.env.local` fuera de git (ver `.gitignore`); variables requeridas documentadas en
+  `.env.example`.
 - Todo acceso a datos pasa por repositorios en `infrastructure/supabase/repositories/`, que
   implementan las interfaces definidas en `domain/repositories/`. La UI y los casos de uso nunca
   importan `@supabase/supabase-js` directamente.
-- Regenerar tipos con `supabase gen types typescript` cuando cambie el esquema; no tipar a mano
-  las tablas.
-- Asumir Row Level Security (RLS) activo en todas las tablas; no depender de la anon key para
-  autorización.
+- Regenerar tipos con `npm run gen:types` (requiere `npx supabase link` a un proyecto real)
+  después de cada cambio de esquema; no tipar a mano las tablas. Una vez exista
+  `infrastructure/supabase/types/database.ts`, tipar el cliente como
+  `createClient<Database>(...)`.
+- RLS activo en todas las tablas de `person`/`event`, con políticas que solo permiten acceso al
+  rol `authenticated` (ver segunda migración); no depender de la anon key para autorización.
+- `npm run db:push` aplica las migraciones pendientes al proyecto Supabase enlazado — requiere
+  `npx supabase link --project-ref <ref>` primero. Nunca ejecutar `db push` sin que el humano a
+  cargo lo confirme explícitamente: es una operación contra una base de datos real.
 
 ## 7. Buenas prácticas generales
 
