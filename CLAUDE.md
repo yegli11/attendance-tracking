@@ -9,10 +9,11 @@ PWA para que el staff de la iglesia inscriba niños en eventos y controle su asi
 vivo). Soporta múltiples eventos y categorías — no un evento único fijo. Requiere sesión
 autenticada (Supabase Auth); no hay uso anónimo/kiosco.
 
-Stack: React 19 + TypeScript + Vite + React Router + Supabase. Identidad visual propia
-inspirada en la paleta de la iglesia (azul `#060773`, gris `#7B817F`, fondo `#F0F0F0`,
-tipografía Montserrat) — no se copia el diseño del prototipo funcional usado como referencia de
-comportamiento, solo su lógica (formularios, ticket con código, roster, check-in).
+Stack: React 19 + TypeScript + Vite + React Router + Supabase + Material UI (MUI). Identidad
+visual propia inspirada en la paleta de la iglesia (azul `#060773`, gris `#7B817F`, fondo
+`#F0F0F0`, tipografía Montserrat), aplicada como un theme de MUI (`presentation/theme/theme.ts`)
+— no se copia el diseño del prototipo funcional usado como referencia de comportamiento, solo su
+lógica (formularios, ticket con código, roster, check-in).
 
 ## 2. Idioma
 
@@ -41,10 +42,12 @@ src/
       client.ts              # instancia única del cliente Supabase
       repositories/           # SupabaseChildRepository.ts, implementa ChildRepository
       types/                  # tipos generados por `supabase gen types typescript`
-  presentation/              # UI. Organizada con Atomic Design.
+  presentation/              # UI. Organizada con Atomic Design, construida sobre MUI.
+    theme/
+      theme.ts                # theme de MUI (paleta, tipografía, overrides de componentes)
     components/
-      atoms/                  # Button, Input, Badge, Avatar...
-      molecules/              # FormField, SearchBar, ChildCard...
+      atoms/                  # Icon y otros átomos que MUI no cubre directamente...
+      molecules/              # composiciones pequeñas de componentes MUI (EventCard...)
       organisms/              # RegistrationForm, AttendanceList, NavBar...
       templates/              # PageLayout, DashboardTemplate...
       pages/                  # RegisterPage, AttendancePage, HomePage...
@@ -74,25 +77,28 @@ Reglas de dependencia (de afuera hacia adentro, nunca al revés):
 - `presentation/` importa `application/` (casos de uso) a través de hooks; nunca llama a
   Supabase directamente desde un componente.
 
-## 4. Componentes: un archivo por responsabilidad
+## 4. Componentes: Material UI + composición
 
-Cada componente vive en su propia carpeta dentro del nivel atómico que le corresponde:
-
-```
-Button/
-  Button.tsx
-  Button.module.css
-  Button.types.ts   # solo si las props ameritan un archivo aparte
-  index.ts           # re-export: export { Button } from './Button'
-```
-
-- **CSS Modules** (`Component.module.css`), no CSS-in-JS ni estilos globales sueltos. Evita
-  colisión de clases y mantiene el estilo junto a su componente.
+- **UI construida con componentes de Material UI** (`@mui/material`): `Button`, `TextField`,
+  `Select`, `Card`, `Dialog`, `AppBar`, `Chip`, `Alert`, `CircularProgress`, etc. No reinventar
+  estos elementos a mano.
+- **Estilizar con el theme** (`presentation/theme/theme.ts`) y el prop `sx`, no con archivos
+  `.module.css` por componente — ya no aplica la convención anterior de CSS Modules. Un
+  `Component.module.css` solo se justifica para algo que `sx`/el theme genuinamente no puedan
+  expresar bien (ej. una animación `@keyframes` compleja); es la excepción, no la regla.
+- Cada componente vive en su propia carpeta con su `.tsx` + `index.ts` (re-export):
+  ```
+  EventCard/
+    EventCard.tsx
+    index.ts           # export { EventCard } from './EventCard'
+  ```
 - Un componente = una responsabilidad. Si un archivo `.tsx` supera ~150 líneas o mezcla lógica
   de negocio con presentación, extraer a un hook (`useX`) o dividir en subcomponentes.
 - Props tipadas explícitamente con `interface Props { ... }`, sin `any`.
 - Componentes funcionales con hooks; nada de clases.
-- Un átomo no debe importar de moléculas/organismos (jerarquía estricta hacia abajo).
+- Un átomo no debe importar de moléculas/organismos (jerarquía estricta hacia abajo). La mayoría
+  de los átomos ahora son componentes de MUI usados directamente (no hace falta envolver
+  `Button` de MUI en nuestro propio `Button` solo por seguir la convención).
 
 ## 5. PWA y responsive
 
@@ -102,13 +108,11 @@ Button/
   `background_color` acordes al diseño de referencia. Los iconos actuales (`public/pwa-icon.svg`)
   son un placeholder de marca; reemplazar por artwork final (idealmente PNG/maskable) antes de
   publicar.
-- Mobile-first: escribir estilos base para mobile y usar `min-width` media queries para escalar
-  hacia arriba, no al revés.
-- Breakpoints centralizados en `src/shared/constants/breakpoints.ts` (usar los mismos valores en
-  los `min-width` de los CSS Modules — las variables CSS no funcionan dentro de `@media`), nunca
-  números mágicos repetidos por archivo.
-- Layout con Flexbox/Grid, unidades relativas (`rem`, `%`, `clamp()`), imágenes con
-  `max-width: 100%`.
+- Mobile-first: valores base para mobile en el prop `sx`, escalados hacia arriba con la sintaxis
+  responsive de MUI (`sx={{ flexDirection: { xs: 'column', md: 'row' } }}`) o `theme.breakpoints`,
+  no media queries de CSS a mano.
+- Layout con los componentes de MUI (`Box`, `Stack`, `Grid`, `Container`) en vez de Flexbox/Grid
+  escritos a mano; imágenes con `max-width: 100%`.
 - Probar que la app sea instalable y funcione razonablemente offline (al menos shell cacheado)
   antes de dar por cerrada una tarea de PWA.
 

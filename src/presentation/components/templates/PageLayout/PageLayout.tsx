@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
+import Box from '@mui/material/Box'
+import Container from '@mui/material/Container'
 import { Header } from '@/presentation/components/organisms/Header'
-import styles from './PageLayout.module.css'
 
 interface Props {
   children: ReactNode
@@ -8,9 +9,11 @@ interface Props {
 
 export function PageLayout({ children }: Props) {
   return (
-    <div className={styles.page}>
+    <Box sx={{ minHeight: '100svh', display: 'flex', flexDirection: 'column' }}>
       <Header />
-      <main className={styles.content}>{children}</main>
-    </div>
+      <Container component="main" maxWidth="md" sx={{ flex: 1, py: { xs: 4, md: 5 } }}>
+        {children}
+      </Container>
+    </Box>
   )
 }
