@@ -38,6 +38,7 @@ export type Database = {
           created_at: string
           event_date: string
           id: number
+          location: string | null
           name: string
         }
         Insert: {
@@ -45,6 +46,7 @@ export type Database = {
           created_at?: string
           event_date: string
           id?: never
+          location?: string | null
           name: string
         }
         Update: {
@@ -52,6 +54,7 @@ export type Database = {
           created_at?: string
           event_date?: string
           id?: never
+          location?: string | null
           name?: string
         }
         Relationships: [

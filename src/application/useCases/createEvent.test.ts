@@ -6,11 +6,13 @@ import { createEvent } from './createEvent'
 function createRepository(): EventRepository {
   return {
     listEvents: vi.fn(),
+    getEvent: vi.fn(),
     createEvent: vi.fn().mockResolvedValue({
       id: 1,
       name: 'Concentración de domingo',
       eventDate: '2026-08-09T15:00:00.000Z',
       categoryId: 3,
+      location: null,
       createdAt: '2026-08-07T00:00:00.000Z',
     }),
   }
@@ -30,6 +32,7 @@ describe('createEvent', () => {
       name: 'Concentración de domingo',
       eventDate: '2026-08-09T15:00:00.000Z',
       categoryId: 3,
+      location: null,
     })
     expect(event.id).toBe(1)
   })

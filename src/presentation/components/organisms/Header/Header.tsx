@@ -39,7 +39,7 @@ export function Header() {
             <Icon name="calendar" size={18} />
           </Box>
           <Typography noWrap sx={{ fontWeight: 800, fontSize: '15.5px' }}>
-            Portal de Eventos
+            Control de Asistencia
           </Typography>
         </Box>
 

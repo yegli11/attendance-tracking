@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import Grid from '@mui/material/Grid'
@@ -15,12 +16,14 @@ import type { Category } from '@/domain/entities/Category'
 import { listEvents } from '@/application/useCases/listEvents'
 import { listCategories } from '@/application/useCases/listCategories'
 import { createEvent } from '@/application/useCases/createEvent'
+import { listAllRegistrationSummaries } from '@/application/useCases/listAllRegistrationSummaries'
 import { supabaseEventRepository } from '@/infrastructure/supabase/repositories/SupabaseEventRepository'
 import { supabaseCategoryRepository } from '@/infrastructure/supabase/repositories/SupabaseCategoryRepository'
-import { useActiveEvent } from '@/presentation/hooks/useActiveEvent'
+import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { StatCard } from '@/presentation/components/molecules/StatCard'
-import { EventList } from '@/presentation/components/organisms/EventList'
+import { EventList, type RegistrationCounts } from '@/presentation/components/organisms/EventList'
+import { EventDetailDrawer } from '@/presentation/components/organisms/EventDetailDrawer'
 import { Modal } from '@/presentation/components/organisms/Modal'
 import { CreateEventForm } from '@/presentation/components/organisms/CreateEventForm'
 import { getEventStatus } from '@/shared/utils/getEventStatus'
@@ -28,13 +31,15 @@ import { getEventStatus } from '@/shared/utils/getEventStatus'
 type Status = 'loading' | 'ready' | 'error'
 
 export function EventsPage() {
-  const { activeEvent, setActiveEvent } = useActiveEvent()
+  const navigate = useNavigate()
   const [events, setEvents] = useState<Event[]>([])
   const [categories, setCategories] = useState<Category[]>([])
+  const [registrationCounts, setRegistrationCounts] = useState<Map<number, RegistrationCounts>>(new Map())
   const [status, setStatus] = useState<Status>('loading')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<number | 'all'>('all')
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -42,13 +47,22 @@ export function EventsPage() {
     async function loadData() {
       setStatus('loading')
       try {
-        const [eventsResult, categoriesResult] = await Promise.all([
+        const [eventsResult, categoriesResult, summaries] = await Promise.all([
           listEvents(supabaseEventRepository),
           listCategories(supabaseCategoryRepository),
+          listAllRegistrationSummaries(supabaseRegistrationRepository),
         ])
         if (cancelled) return
+        const counts = new Map<number, RegistrationCounts>()
+        for (const summary of summaries) {
+          const current = counts.get(summary.eventId) ?? { registered: 0, attended: 0 }
+          current.registered += 1
+          if (summary.attended) current.attended += 1
+          counts.set(summary.eventId, current)
+        }
         setEvents(eventsResult)
         setCategories(categoriesResult)
+        setRegistrationCounts(counts)
         setStatus('ready')
       } catch {
         if (!cancelled) setStatus('error')
@@ -78,14 +92,31 @@ export function EventsPage() {
     })
   }, [events, search, categoryFilter])
 
-  const stats = useMemo(
-    () => ({
+  const stats = useMemo(() => {
+    const todayEvents = events.filter((event) => getEventStatus(event.eventDate) === 'hoy')
+    let inscritosTotales = 0
+    for (const counts of registrationCounts.values()) inscritosTotales += counts.registered
+
+    let inscritosHoy = 0
+    let asistieronHoy = 0
+    for (const event of todayEvents) {
+      const counts = registrationCounts.get(event.id)
+      if (!counts) continue
+      inscritosHoy += counts.registered
+      asistieronHoy += counts.attended
+    }
+
+    return {
       total: events.length,
-      hoy: events.filter((event) => getEventStatus(event.eventDate) === 'hoy').length,
-      proximos: events.filter((event) => getEventStatus(event.eventDate) === 'proximo').length,
-    }),
-    [events],
-  )
+      hoy: todayEvents.length,
+      inscritosTotales,
+      asistenciaHoy: inscritosHoy > 0 ? `${Math.round((asistieronHoy / inscritosHoy) * 100)}%` : '—',
+    }
+  }, [events, registrationCounts])
+
+  const selectedEventCounts = selectedEvent
+    ? (registrationCounts.get(selectedEvent.id) ?? { registered: 0, attended: 0 })
+    : { registered: 0, attended: 0 }
 
   return (
     <Stack spacing={3}>
@@ -99,9 +130,7 @@ export function EventsPage() {
             Tus eventos
           </Typography>
           <Typography sx={{ color: 'text.secondary' }}>
-            {activeEvent
-              ? `Evento activo: ${activeEvent.name}`
-              : 'Selecciona un evento para inscribir asistentes o controlar el ingreso.'}
+            Selecciona un evento para inscribir asistentes o controlar el ingreso.
           </Typography>
         </Box>
         <Button
@@ -120,13 +149,13 @@ export function EventsPage() {
             <StatCard icon="calendar" label="Eventos totales" value={stats.total} />
           </Grid>
           <Grid size={{ xs: 6, md: 3 }}>
-            <StatCard icon="check" label="Hoy" value={stats.hoy} />
+            <StatCard icon="clock" label="Hoy" value={stats.hoy} />
           </Grid>
           <Grid size={{ xs: 6, md: 3 }}>
-            <StatCard icon="calendar" label="Próximos" value={stats.proximos} />
+            <StatCard icon="users" label="Inscritos totales" value={stats.inscritosTotales} />
           </Grid>
           <Grid size={{ xs: 6, md: 3 }}>
-            <StatCard icon="users" label="Categorías" value={categories.length} />
+            <StatCard icon="check" label="Asistencia hoy" value={stats.asistenciaHoy} />
           </Grid>
         </Grid>
       )}
@@ -193,10 +222,19 @@ export function EventsPage() {
           events={filteredEvents}
           hasAnyEvents={events.length > 0}
           categories={categories}
-          activeEventId={activeEvent?.id ?? null}
-          onSelectEvent={setActiveEvent}
+          registrationCounts={registrationCounts}
+          onSelectEvent={setSelectedEvent}
         />
       )}
+
+      <EventDetailDrawer
+        event={selectedEvent}
+        category={categories.find((category) => category.id === selectedEvent?.categoryId)}
+        registered={selectedEventCounts.registered}
+        attended={selectedEventCounts.attended}
+        onClose={() => setSelectedEvent(null)}
+        onEnterEvent={() => selectedEvent && navigate(`/events/${selectedEvent.id}`)}
+      />
 
       {isModalOpen && (
         <Modal title="Crear evento" onClose={() => setIsModalOpen(false)}>

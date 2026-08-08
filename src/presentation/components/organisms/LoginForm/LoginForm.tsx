@@ -7,10 +7,12 @@ import IconButton from '@mui/material/IconButton'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import { useAuth } from '@/presentation/hooks/useAuth'
+import { useToast } from '@/presentation/hooks/useToast'
 import { Icon } from '@/presentation/components/atoms/Icon'
 
 export function LoginForm() {
   const { signIn } = useAuth()
+  const { showSuccess, showError } = useToast()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isPasswordVisible, setIsPasswordVisible] = useState(false)
@@ -23,12 +25,12 @@ export function LoginForm() {
     setIsSubmitting(true)
     try {
       await signIn({ email, password })
+      showSuccess('Bienvenido de vuelta.')
     } catch (err) {
-      setError(
-        err instanceof ZodError
-          ? (err.issues[0]?.message ?? 'Datos inválidos.')
-          : 'Correo o contraseña incorrectos.',
-      )
+      const message =
+        err instanceof ZodError ? (err.issues[0]?.message ?? 'Datos inválidos.') : 'Correo o contraseña incorrectos.'
+      setError(message)
+      showError(message)
     } finally {
       setIsSubmitting(false)
     }
