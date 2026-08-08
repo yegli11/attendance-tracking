@@ -12,8 +12,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg'],
       manifest: {
-        name: 'Concentración Infantil — Asistencia',
-        short_name: 'Asistencia Infantil',
+        name: 'Control de Asistencia',
+        short_name: 'Control de Asistencia',
         description: 'Inscripción y control de asistencia de niños a eventos.',
         lang: 'es',
         start_url: '/',
