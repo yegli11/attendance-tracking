@@ -1,16 +1,17 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AuthProvider } from '@/presentation/context/AuthContext'
-import { ActiveEventProvider } from '@/presentation/context/ActiveEventContext'
+import { ToastProvider } from '@/presentation/context/ToastContext'
 import { RequireAuth } from '@/presentation/components/templates/RequireAuth'
 import { PageLayout } from '@/presentation/components/templates/PageLayout'
 import { EventsPage } from '@/presentation/components/pages/EventsPage'
+import { EventWorkspacePage } from '@/presentation/components/pages/EventWorkspacePage'
 import { LoginPage } from '@/presentation/components/pages/LoginPage'
 
 function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <ActiveEventProvider>
+      <ToastProvider>
+        <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route
@@ -23,9 +24,19 @@ function App() {
                 </RequireAuth>
               }
             />
+            <Route
+              path="/events/:eventId"
+              element={
+                <RequireAuth>
+                  <PageLayout>
+                    <EventWorkspacePage />
+                  </PageLayout>
+                </RequireAuth>
+              }
+            />
           </Routes>
-        </ActiveEventProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </ToastProvider>
     </BrowserRouter>
   )
 }

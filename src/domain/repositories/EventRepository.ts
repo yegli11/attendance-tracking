@@ -8,5 +8,6 @@ export interface CreateEventInput {
 
 export interface EventRepository {
   listEvents(): Promise<Event[]>
+  getEvent(id: number): Promise<Event | null>
   createEvent(input: CreateEventInput): Promise<Event>
 }

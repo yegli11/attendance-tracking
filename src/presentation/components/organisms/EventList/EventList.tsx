@@ -5,15 +5,20 @@ import type { Event } from '@/domain/entities/Event'
 import type { Category } from '@/domain/entities/Category'
 import { EventCard } from '@/presentation/components/molecules/EventCard'
 
+export interface RegistrationCounts {
+  registered: number
+  attended: number
+}
+
 interface Props {
   events: Event[]
   hasAnyEvents: boolean
   categories: Category[]
-  activeEventId: number | null
+  registrationCounts: Map<number, RegistrationCounts>
   onSelectEvent: (event: Event) => void
 }
 
-export function EventList({ events, hasAnyEvents, categories, activeEventId, onSelectEvent }: Props) {
+export function EventList({ events, hasAnyEvents, categories, registrationCounts, onSelectEvent }: Props) {
   if (events.length === 0) {
     return (
       <Box
@@ -42,16 +47,20 @@ export function EventList({ events, hasAnyEvents, categories, activeEventId, onS
 
   return (
     <Grid container spacing={2.5}>
-      {events.map((event) => (
-        <Grid key={event.id} size={{ xs: 12, sm: 6, md: 4 }}>
-          <EventCard
-            event={event}
-            category={categories.find((category) => category.id === event.categoryId)}
-            isActive={event.id === activeEventId}
-            onSelect={() => onSelectEvent(event)}
-          />
-        </Grid>
-      ))}
+      {events.map((event) => {
+        const counts = registrationCounts.get(event.id) ?? { registered: 0, attended: 0 }
+        return (
+          <Grid key={event.id} size={{ xs: 12, sm: 6, md: 4 }}>
+            <EventCard
+              event={event}
+              category={categories.find((category) => category.id === event.categoryId)}
+              registered={counts.registered}
+              attended={counts.attended}
+              onClick={() => onSelectEvent(event)}
+            />
+          </Grid>
+        )
+      })}
     </Grid>
   )
 }

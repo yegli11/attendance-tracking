@@ -1,0 +1,1 @@
+export { EditRegistrationForm } from './EditRegistrationForm'

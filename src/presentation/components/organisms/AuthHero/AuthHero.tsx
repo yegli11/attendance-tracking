@@ -57,11 +57,11 @@ export function AuthHero() {
           >
             <Icon name="calendar" size={20} />
           </Box>
-          <Typography sx={{ fontWeight: 700, fontSize: '1.0625rem' }}>Portal de Eventos</Typography>
+          <Typography sx={{ fontWeight: 700, fontSize: '1.0625rem' }}>Control de Asistencia</Typography>
         </Stack>
 
         <Typography variant="h3" sx={{ fontSize: { xs: '1.75rem', md: '2.25rem' }, lineHeight: 1.25 }}>
-          Inscripciones y asistencia para todos los eventos de tu iglesia
+          Inscripciones y asistencia para todos los eventos de la Iglesia Antorcha de Cristo
         </Typography>
 
         <Typography sx={{ color: 'rgba(255,255,255,0.85)', maxWidth: '46ch', fontSize: '0.9375rem' }}>
@@ -90,7 +90,7 @@ export function AuthHero() {
         variant="caption"
         sx={{ position: 'relative', color: 'rgba(255,255,255,0.6)', display: { xs: 'none', md: 'block' } }}
       >
-        © Portal de Eventos — uso interno para equipos de ministerio
+        © Control de Asistencia — uso interno para equipos de ministerio
       </Typography>
     </Box>
   )
