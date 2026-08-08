@@ -31,6 +31,8 @@ import { AttendanceTab } from '@/presentation/components/organisms/AttendanceTab
 import { formatEventDate } from '@/shared/utils/formatEventDate'
 import { getCategoryColor } from '@/shared/utils/categoryColor'
 import { categoryRequiresRepresentative } from '@/shared/utils/categoryRequiresRepresentative'
+import { exportAttendanceExcel } from '@/shared/utils/exportAttendanceExcel'
+import { useToast } from '@/presentation/hooks/useToast'
 
 type Status = 'loading' | 'ready' | 'error' | 'not-found'
 type TabKey = 'lista' | 'inscribir' | 'asistencia'
@@ -38,6 +40,7 @@ type TabKey = 'lista' | 'inscribir' | 'asistencia'
 export function EventWorkspacePage() {
   const { eventId } = useParams<{ eventId: string }>()
   const navigate = useNavigate()
+  const { showError } = useToast()
   const id = Number(eventId)
 
   const [event, setEvent] = useState<Event | null>(null)
@@ -46,6 +49,7 @@ export function EventWorkspacePage() {
   const [genders, setGenders] = useState<Gender[]>([])
   const [status, setStatus] = useState<Status>('loading')
   const [tab, setTab] = useState<TabKey>('lista')
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -108,6 +112,18 @@ export function EventWorkspacePage() {
     )
   }
 
+  async function handleExportAttendance() {
+    if (!event) return
+    setIsExporting(true)
+    try {
+      await exportAttendanceExcel(event, roster)
+    } catch {
+      showError('No se pudo generar el Excel de asistencia.')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   if (status === 'loading') {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}>
@@ -139,15 +155,24 @@ export function EventWorkspacePage() {
 
   return (
     <Stack spacing={3}>
-      <Button
-        variant="outlined"
-        color="inherit"
-        startIcon={<Icon name="arrowLeft" size={15} />}
-        onClick={() => navigate('/')}
-        sx={{ alignSelf: 'flex-start' }}
-      >
-        Volver a mis eventos
-      </Button>
+      <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1.5 }}>
+        <Button
+          variant="outlined"
+          color="inherit"
+          startIcon={<Icon name="arrowLeft" size={15} />}
+          onClick={() => navigate('/')}
+        >
+          Volver a mis eventos
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<Icon name="download" size={15} />}
+          onClick={handleExportAttendance}
+          disabled={isExporting || stats.attended === 0}
+        >
+          {isExporting ? 'Generando…' : 'Descargar asistencia (Excel)'}
+        </Button>
+      </Stack>
 
       <Box>
         {category && (

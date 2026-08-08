@@ -18,7 +18,7 @@ export function RosterCard({ entry, onEdit }: Props) {
     <Box
       sx={{
         borderLeft: '5px solid',
-        borderLeftColor: entry.attended ? '#1E63D6' : 'divider',
+        borderLeftColor: entry.attended ? 'success.dark' : 'divider',
         border: '1px solid',
         borderColor: 'divider',
         borderRadius: 2,
@@ -70,8 +70,8 @@ export function RosterCard({ entry, onEdit }: Props) {
         sx={{
           mt: 1.25,
           fontWeight: 700,
-          bgcolor: entry.attended ? '#EEF4FF' : 'warning.light',
-          color: entry.attended ? '#1E63D6' : 'warning.dark',
+          bgcolor: entry.attended ? 'success.dark' : 'warning.main',
+          color: 'common.white',
         }}
       />
     </Box>

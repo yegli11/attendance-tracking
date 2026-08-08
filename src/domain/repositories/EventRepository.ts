@@ -4,7 +4,6 @@ export interface CreateEventInput {
   name: string
   eventDate: string
   categoryId: number
-  location: string | null
 }
 
 export interface EventRepository {

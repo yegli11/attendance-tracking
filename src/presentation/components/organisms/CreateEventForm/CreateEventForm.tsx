@@ -22,7 +22,6 @@ export function CreateEventForm({ categories, onSubmit, onCancel }: Props) {
   const { showSuccess, showError } = useToast()
   const [name, setName] = useState('')
   const [eventDate, setEventDate] = useState<Dayjs | null>(null)
-  const [location, setLocation] = useState('')
   const [categoryId, setCategoryId] = useState(categories[0] ? String(categories[0].id) : '')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -36,7 +35,6 @@ export function CreateEventForm({ categories, onSubmit, onCancel }: Props) {
         name,
         eventDate: eventDate?.isValid() ? eventDate.toISOString() : '',
         categoryId: Number(categoryId),
-        location: location.trim() || null,
       })
       showSuccess(`Evento "${name}" creado correctamente.`)
     } catch (err) {
@@ -83,15 +81,6 @@ export function CreateEventForm({ categories, onSubmit, onCancel }: Props) {
           </MenuItem>
         ))}
       </TextField>
-
-      <TextField
-        id="eventLocation"
-        label="Lugar (opcional)"
-        placeholder="Salón principal"
-        value={location}
-        onChange={(event) => setLocation(event.target.value)}
-        fullWidth
-      />
 
       {error && <Alert severity="error">{error}</Alert>}
 

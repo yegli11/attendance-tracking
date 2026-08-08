@@ -2,7 +2,6 @@ import type { RegistrationRepository } from '@/domain/repositories/RegistrationR
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { supabase } from '@/infrastructure/supabase/client'
 import type { Database } from '@/infrastructure/supabase/types/database'
-import { getCodePrefix } from '@/shared/utils/getCodePrefix'
 
 type RegistrationRow = Database['event']['Tables']['registration']['Row']
 type ContactRow = Database['person']['Tables']['contact']['Row']
@@ -64,18 +63,22 @@ async function hydrate(registrations: RegistrationRow[]): Promise<RosterEntry[]>
   return entries
 }
 
-async function generateUniqueCode(eventId: number, prefix: string): Promise<string> {
-  for (let sequence = 1; sequence <= 9999; sequence++) {
-    const code = `${prefix}-${String(sequence).padStart(3, '0')}`
-    const { data, error } = await supabase
-      .schema('event')
-      .from('registration')
-      .select('id')
-      .eq('event_id', eventId)
-      .eq('code', code)
-      .maybeSingle()
-    if (error) throw error
-    if (!data) return code
+const CODE_LETTERS = 'ZYXWVUTSRQPONMLKJIHGFEDCBA'.split('')
+
+async function generateUniqueCode(eventId: number): Promise<string> {
+  for (const letter of CODE_LETTERS) {
+    for (let number = 1; number <= 99; number++) {
+      const code = `${letter}-${String(number).padStart(2, '0')}`
+      const { data, error } = await supabase
+        .schema('event')
+        .from('registration')
+        .select('id')
+        .eq('event_id', eventId)
+        .eq('code', code)
+        .maybeSingle()
+      if (error) throw error
+      if (!data) return code
+    }
   }
   throw new Error('No se pudo generar un código único para este evento.')
 }
@@ -129,16 +132,9 @@ export const supabaseRegistrationRepository: RegistrationRepository = {
         .eq('code', code)
         .maybeSingle()
       if (existingError) throw existingError
-      if (existing) throw new Error('Ese código ya está en uso, prueba con otro.')
+      if (existing) throw new Error('Ese código ya fue asignado a otro asistente, ingresa uno diferente.')
     } else {
-      const { data: event, error: eventError } = await supabase
-        .schema('event')
-        .from('event')
-        .select('name')
-        .eq('id', input.eventId)
-        .single()
-      if (eventError) throw eventError
-      code = await generateUniqueCode(input.eventId, getCodePrefix(event.name))
+      code = await generateUniqueCode(input.eventId)
     }
 
     const { data: registration, error: registrationError } = await supabase

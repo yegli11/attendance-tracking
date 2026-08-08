@@ -32,7 +32,6 @@ describe('createEvent', () => {
       name: 'Concentración de domingo',
       eventDate: '2026-08-09T15:00:00.000Z',
       categoryId: 3,
-      location: null,
     })
     expect(event.id).toBe(1)
   })

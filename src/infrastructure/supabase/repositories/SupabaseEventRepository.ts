@@ -41,7 +41,6 @@ export const supabaseEventRepository: EventRepository = {
         name: input.name,
         event_date: input.eventDate,
         category_id: input.categoryId,
-        location: input.location,
       })
       .select()
       .single()
