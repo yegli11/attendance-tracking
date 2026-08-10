@@ -1,5 +1,5 @@
 import type { RegistrationRepository } from '@/domain/repositories/RegistrationRepository'
-import type { RosterEntry } from '@/domain/entities/RosterEntry'
+import type { DayAttendance, RosterEntry } from '@/domain/entities/RosterEntry'
 import { supabase } from '@/infrastructure/supabase/client'
 import type { Database } from '@/infrastructure/supabase/types/database'
 
@@ -10,22 +10,28 @@ async function hydrate(registrations: RegistrationRow[]): Promise<RosterEntry[]>
   if (registrations.length === 0) return []
 
   const personIds = [...new Set(registrations.map((row) => row.person_id))]
+  const eventIds = [...new Set(registrations.map((row) => row.event_id))]
   const registrationIds = registrations.map((row) => row.id)
 
-  const [personsResult, contactsResult, gendersResult, representativesResult] = await Promise.all([
-    supabase.schema('person').from('person').select('*').in('id', personIds),
-    supabase.schema('person').from('contact').select('*').in('person_id', personIds),
-    supabase.schema('person').from('gender').select('*'),
-    supabase
-      .schema('person')
-      .from('authorized_representative')
-      .select('*')
-      .in('registration_id', registrationIds),
-  ])
+  const [personsResult, contactsResult, gendersResult, representativesResult, daysResult, attendanceResult] =
+    await Promise.all([
+      supabase.schema('person').from('person').select('*').in('id', personIds),
+      supabase.schema('person').from('contact').select('*').in('person_id', personIds),
+      supabase.schema('person').from('gender').select('*'),
+      supabase
+        .schema('person')
+        .from('authorized_representative')
+        .select('*')
+        .in('registration_id', registrationIds),
+      supabase.schema('event').from('day').select('*').in('event_id', eventIds).order('day_number'),
+      supabase.schema('event').from('attendance').select('*').in('registration_id', registrationIds),
+    ])
   if (personsResult.error) throw personsResult.error
   if (contactsResult.error) throw contactsResult.error
   if (gendersResult.error) throw gendersResult.error
   if (representativesResult.error) throw representativesResult.error
+  if (daysResult.error) throw daysResult.error
+  if (attendanceResult.error) throw attendanceResult.error
 
   const personById = new Map(personsResult.data.map((person) => [person.id, person]))
   const genderById = new Map(gendersResult.data.map((gender) => [gender.id, gender]))
@@ -38,18 +44,33 @@ async function hydrate(registrations: RegistrationRow[]): Promise<RosterEntry[]>
   const representativeByRegistrationId = new Map(
     representativesResult.data.map((representative) => [representative.registration_id, representative]),
   )
+  const daysByEventId = new Map<number, typeof daysResult.data>()
+  for (const day of daysResult.data) {
+    const list = daysByEventId.get(day.event_id) ?? []
+    list.push(day)
+    daysByEventId.set(day.event_id, list)
+  }
+  const attendedAtByRegistrationAndDay = new Map<string, string>()
+  for (const attendance of attendanceResult.data) {
+    attendedAtByRegistrationAndDay.set(`${attendance.registration_id}:${attendance.day_id}`, attendance.attended_at)
+  }
 
   const entries: RosterEntry[] = []
   for (const registration of registrations) {
     const person = personById.get(registration.person_id)
     if (!person) continue
     const contacts = (contactsByPersonId.get(person.id) ?? []).sort((a, b) => a.id - b.id)
+    const days = daysByEventId.get(registration.event_id) ?? []
+    const attendance: DayAttendance[] = days.map((day) => ({
+      eventDayId: day.id,
+      dayNumber: day.day_number,
+      attendedAt: attendedAtByRegistrationAndDay.get(`${registration.id}:${day.id}`) ?? null,
+    }))
     entries.push({
       registrationId: registration.id,
       eventId: registration.event_id,
       code: registration.code,
-      attended: registration.attended,
-      attendedDate: registration.attended_date,
+      attendance,
       personId: person.id,
       firstName: person.name,
       lastName: person.last_name,
@@ -96,9 +117,18 @@ export const supabaseRegistrationRepository: RegistrationRepository = {
   },
 
   async listAllSummaries() {
-    const { data, error } = await supabase.schema('event').from('registration').select('event_id, attended')
-    if (error) throw error
-    return data.map((row) => ({ eventId: row.event_id, attended: row.attended }))
+    const [registrationsResult, attendanceResult] = await Promise.all([
+      supabase.schema('event').from('registration').select('id, event_id'),
+      supabase.schema('event').from('attendance').select('registration_id'),
+    ])
+    if (registrationsResult.error) throw registrationsResult.error
+    if (attendanceResult.error) throw attendanceResult.error
+
+    const registrationIdsWithAttendance = new Set(attendanceResult.data.map((row) => row.registration_id))
+    return registrationsResult.data.map((row) => ({
+      eventId: row.event_id,
+      attendedAnyDay: registrationIdsWithAttendance.has(row.id),
+    }))
   },
 
   async register(input) {
@@ -275,15 +305,33 @@ export const supabaseRegistrationRepository: RegistrationRepository = {
     return entry ?? null
   },
 
-  async setAttendance(registrationId, attended) {
-    const { data, error } = await supabase
+  async setAttendance(registrationId, eventDayId, attended) {
+    if (attended) {
+      const { error } = await supabase
+        .schema('event')
+        .from('attendance')
+        .upsert(
+          { registration_id: registrationId, day_id: eventDayId, attended_at: new Date().toISOString() },
+          { onConflict: 'registration_id,day_id' },
+        )
+      if (error) throw error
+    } else {
+      const { error } = await supabase
+        .schema('event')
+        .from('attendance')
+        .delete()
+        .eq('registration_id', registrationId)
+        .eq('day_id', eventDayId)
+      if (error) throw error
+    }
+
+    const { data, error: registrationError } = await supabase
       .schema('event')
       .from('registration')
-      .update({ attended, attended_date: attended ? new Date().toISOString() : null })
+      .select('*')
       .eq('id', registrationId)
-      .select()
       .single()
-    if (error) throw error
+    if (registrationError) throw registrationError
     const [entry] = await hydrate([data])
     if (!entry) throw new Error('No se pudo actualizar la asistencia.')
     return entry

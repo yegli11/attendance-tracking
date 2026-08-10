@@ -5,6 +5,7 @@ import InputAdornment from '@mui/material/InputAdornment'
 import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
 import type { Gender } from '@/domain/entities/Gender'
+import type { EventDay } from '@/domain/entities/EventDay'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { RosterCard } from '@/presentation/components/molecules/RosterCard'
@@ -13,12 +14,13 @@ import { EditRegistrationForm } from '@/presentation/components/organisms/EditRe
 
 interface Props {
   roster: RosterEntry[]
+  days: EventDay[]
   genders: Gender[]
   requiresRepresentative: boolean
   onUpdated: (entry: RosterEntry) => void
 }
 
-export function RosterTab({ roster, genders, requiresRepresentative, onUpdated }: Props) {
+export function RosterTab({ roster, days, genders, requiresRepresentative, onUpdated }: Props) {
   const [search, setSearch] = useState('')
   const [editingEntry, setEditingEntry] = useState<RosterEntry | null>(null)
 
@@ -61,7 +63,7 @@ export function RosterTab({ roster, genders, requiresRepresentative, onUpdated }
         <Grid container spacing={2}>
           {filtered.map((entry) => (
             <Grid key={entry.registrationId} size={{ xs: 12, sm: 6, md: 4 }}>
-              <RosterCard entry={entry} onEdit={() => setEditingEntry(entry)} />
+              <RosterCard entry={entry} days={days} onEdit={() => setEditingEntry(entry)} />
             </Grid>
           ))}
         </Grid>

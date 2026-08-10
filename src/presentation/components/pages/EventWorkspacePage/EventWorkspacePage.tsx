@@ -28,7 +28,7 @@ import { AttendanceRing } from '@/presentation/components/molecules/AttendanceRi
 import { RosterTab } from '@/presentation/components/organisms/RosterTab'
 import { RegisterTab } from '@/presentation/components/organisms/RegisterTab'
 import { AttendanceTab } from '@/presentation/components/organisms/AttendanceTab'
-import { formatEventDate } from '@/shared/utils/formatEventDate'
+import { formatEventDateRange, formatEventDayLabel } from '@/shared/utils/formatEventDate'
 import { getCategoryColor } from '@/shared/utils/categoryColor'
 import { categoryRequiresRepresentative } from '@/shared/utils/categoryRequiresRepresentative'
 import { exportAttendanceExcel } from '@/shared/utils/exportAttendanceExcel'
@@ -50,6 +50,7 @@ export function EventWorkspacePage() {
   const [status, setStatus] = useState<Status>('loading')
   const [tab, setTab] = useState<TabKey>('lista')
   const [isExporting, setIsExporting] = useState(false)
+  const [selectedDayId, setSelectedDayId] = useState<number | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -76,6 +77,9 @@ export function EventWorkspacePage() {
         setCategories(categoriesResult)
         setRoster(rosterResult)
         setGenders(gendersResult)
+        const today = new Date().toDateString()
+        const todayDay = eventResult.days.find((day) => new Date(day.eventDate).toDateString() === today)
+        setSelectedDayId((todayDay ?? eventResult.days[0])?.id ?? null)
         setStatus('ready')
       } catch {
         if (!cancelled) setStatus('error')
@@ -93,14 +97,16 @@ export function EventWorkspacePage() {
 
   const stats = useMemo(() => {
     const registered = roster.length
-    const attended = roster.filter((entry) => entry.attended).length
+    const attended = roster.filter((entry) =>
+      entry.attendance.some((day) => day.eventDayId === selectedDayId && day.attendedAt !== null),
+    ).length
     return {
       registered,
       attended,
       pending: registered - attended,
       percentage: registered ? Math.round((attended / registered) * 100) : 0,
     }
-  }, [roster])
+  }, [roster, selectedDayId])
 
   function handleRegistered(entry: RosterEntry) {
     setRoster((current) => [entry, ...current])
@@ -111,6 +117,8 @@ export function EventWorkspacePage() {
       current.map((item) => (item.registrationId === entry.registrationId ? entry : item)),
     )
   }
+
+  const hasAnyAttendance = roster.some((entry) => entry.attendance.some((day) => day.attendedAt !== null))
 
   async function handleExportAttendance() {
     if (!event) return
@@ -168,7 +176,7 @@ export function EventWorkspacePage() {
           variant="outlined"
           startIcon={<Icon name="download" size={15} />}
           onClick={handleExportAttendance}
-          disabled={isExporting || stats.attended === 0}
+          disabled={isExporting || !hasAnyAttendance}
         >
           {isExporting ? 'Generando…' : 'Descargar asistencia (Excel)'}
         </Button>
@@ -186,10 +194,28 @@ export function EventWorkspacePage() {
           {event.name}
         </Typography>
         <Typography sx={{ color: 'text.secondary', mt: 0.5 }}>
-          {formatEventDate(event.eventDate)}
+          {formatEventDateRange(event.days)}
           {event.location ? ` · ${event.location}` : ''}
         </Typography>
       </Box>
+
+      {event.days.length > 1 && (
+        <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+          {event.days.map((day) => (
+            <Chip
+              key={day.id}
+              label={formatEventDayLabel(day)}
+              onClick={() => setSelectedDayId(day.id)}
+              sx={
+                selectedDayId === day.id
+                  ? { bgcolor: 'text.primary', color: 'common.white', fontWeight: 700 }
+                  : { fontWeight: 700 }
+              }
+              variant={selectedDayId === day.id ? 'filled' : 'outlined'}
+            />
+          ))}
+        </Stack>
+      )}
 
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 6, md: 3 }}>
@@ -242,6 +268,7 @@ export function EventWorkspacePage() {
       {tab === 'lista' && (
         <RosterTab
           roster={roster}
+          days={event.days}
           genders={genders}
           requiresRepresentative={requiresRepresentative}
           onUpdated={handleRosterEntryChange}
@@ -255,8 +282,13 @@ export function EventWorkspacePage() {
           onRegistered={handleRegistered}
         />
       )}
-      {tab === 'asistencia' && (
-        <AttendanceTab eventId={event.id} roster={roster} onAttendanceChange={handleRosterEntryChange} />
+      {tab === 'asistencia' && selectedDayId !== null && (
+        <AttendanceTab
+          eventId={event.id}
+          roster={roster}
+          selectedDayId={selectedDayId}
+          onAttendanceChange={handleRosterEntryChange}
+        />
       )}
     </Stack>
   )

@@ -23,6 +23,7 @@ export function CreateEventForm({ categories, onSubmit, onCancel }: Props) {
   const [name, setName] = useState('')
   const [eventDate, setEventDate] = useState<Dayjs | null>(null)
   const [categoryId, setCategoryId] = useState(categories[0] ? String(categories[0].id) : '')
+  const [durationDays, setDurationDays] = useState('1')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -35,6 +36,7 @@ export function CreateEventForm({ categories, onSubmit, onCancel }: Props) {
         name,
         eventDate: eventDate?.isValid() ? eventDate.toISOString() : '',
         categoryId: Number(categoryId),
+        durationDays: Number(durationDays),
       })
       showSuccess(`Evento "${name}" creado correctamente.`)
     } catch (err) {
@@ -57,15 +59,27 @@ export function CreateEventForm({ categories, onSubmit, onCancel }: Props) {
         fullWidth
       />
 
-      <DateTimePicker
-        label="Fecha y hora"
-        value={eventDate}
-        onChange={(value) => setEventDate(value)}
-        ampm
-        slotProps={{
-          textField: { fullWidth: true, id: 'eventDate', slotProps: { inputLabel: { shrink: true } } },
-        }}
-      />
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+        <DateTimePicker
+          label="Fecha y hora de inicio"
+          value={eventDate}
+          onChange={(value) => setEventDate(value)}
+          ampm
+          slotProps={{
+            textField: { fullWidth: true, id: 'eventDate', slotProps: { inputLabel: { shrink: true } } },
+          }}
+        />
+        <TextField
+          id="durationDays"
+          label="Duración (días)"
+          type="number"
+          value={durationDays}
+          onChange={(event) => setDurationDays(event.target.value)}
+          slotProps={{ htmlInput: { min: 1, max: 14 } }}
+          helperText="Si el evento dura varios días seguidos, la asistencia se toma por separado cada día."
+          fullWidth
+        />
+      </Stack>
 
       <TextField
         id="eventCategory"
