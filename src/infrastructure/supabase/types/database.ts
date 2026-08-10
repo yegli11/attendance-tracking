@@ -69,8 +69,6 @@ export type Database = {
       }
       registration: {
         Row: {
-          attended: boolean
-          attended_date: string | null
           code: string
           created_at: string
           event_id: number
@@ -78,8 +76,6 @@ export type Database = {
           person_id: number
         }
         Insert: {
-          attended?: boolean
-          attended_date?: string | null
           code: string
           created_at?: string
           event_id: number
@@ -87,8 +83,6 @@ export type Database = {
           person_id: number
         }
         Update: {
-          attended?: boolean
-          attended_date?: string | null
           code?: string
           created_at?: string
           event_id?: number
@@ -101,6 +95,77 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "event"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      day: {
+        Row: {
+          created_at: string
+          day_number: number
+          event_date: string
+          event_id: number
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          day_number: number
+          event_date: string
+          event_id: number
+          id?: never
+        }
+        Update: {
+          created_at?: string
+          day_number?: number
+          event_date?: string
+          event_id?: number
+          id?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_day_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attendance: {
+        Row: {
+          attended_at: string
+          created_at: string
+          day_id: number
+          id: number
+          registration_id: number
+        }
+        Insert: {
+          attended_at?: string
+          created_at?: string
+          day_id: number
+          id?: never
+          registration_id: number
+        }
+        Update: {
+          attended_at?: string
+          created_at?: string
+          day_id?: number
+          id?: never
+          registration_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_event_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "day"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registration"
             referencedColumns: ["id"]
           },
         ]

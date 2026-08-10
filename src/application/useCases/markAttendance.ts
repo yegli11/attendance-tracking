@@ -4,7 +4,8 @@ import type { RosterEntry } from '@/domain/entities/RosterEntry'
 export function markAttendance(
   repository: RegistrationRepository,
   registrationId: number,
+  eventDayId: number,
   attended: boolean,
 ): Promise<RosterEntry> {
-  return repository.setAttendance(registrationId, attended)
+  return repository.setAttendance(registrationId, eventDayId, attended)
 }

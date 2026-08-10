@@ -4,6 +4,8 @@ export interface CreateEventInput {
   name: string
   eventDate: string
   categoryId: number
+  /** Number of consecutive days the event runs, starting at eventDate. */
+  durationDays: number
 }
 
 export interface EventRepository {
