@@ -4,21 +4,26 @@ import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
+import type { EventDay } from '@/domain/entities/EventDay'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { ageLabel } from '@/shared/utils/calculateAge'
 
 interface Props {
   entry: RosterEntry
+  days: EventDay[]
   onEdit: () => void
 }
 
-export function RosterCard({ entry, onEdit }: Props) {
+export function RosterCard({ entry, days, onEdit }: Props) {
+  const isMultiDay = days.length > 1
+  const attendedAnyDay = entry.attendance.some((day) => day.attendedAt !== null)
+
   return (
     <Box
       sx={{
         borderLeft: '5px solid',
-        borderLeftColor: entry.attended ? 'success.dark' : 'divider',
+        borderLeftColor: attendedAnyDay ? 'success.dark' : 'divider',
         border: '1px solid',
         borderColor: 'divider',
         borderRadius: 2,
@@ -53,27 +58,44 @@ export function RosterCard({ entry, onEdit }: Props) {
         <span>{entry.phoneNumber}</span>
       </Stack>
 
-      <Chip
-        size="small"
-        label={
-          entry.attended
-            ? `En el evento${
-                entry.attendedDate
-                  ? ` · ${new Date(entry.attendedDate).toLocaleTimeString('es-CL', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                    })}`
-                  : ''
-              }`
-            : 'Pendiente'
-        }
-        sx={{
-          mt: 1.25,
-          fontWeight: 700,
-          bgcolor: entry.attended ? 'success.dark' : 'warning.main',
-          color: 'common.white',
-        }}
-      />
+      {isMultiDay ? (
+        <Stack direction="row" spacing={0.5} sx={{ mt: 1.25, flexWrap: 'wrap' }} useFlexGap>
+          {entry.attendance.map((day) => (
+            <Chip
+              key={day.eventDayId}
+              size="small"
+              label={`D${day.dayNumber}`}
+              sx={{
+                fontWeight: 700,
+                bgcolor: day.attendedAt !== null ? 'success.dark' : 'action.disabledBackground',
+                color: day.attendedAt !== null ? 'common.white' : 'text.secondary',
+              }}
+            />
+          ))}
+        </Stack>
+      ) : (
+        <Chip
+          size="small"
+          label={
+            attendedAnyDay
+              ? `En el evento${
+                  entry.attendance[0]?.attendedAt
+                    ? ` · ${new Date(entry.attendance[0].attendedAt).toLocaleTimeString('es-CL', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}`
+                    : ''
+                }`
+              : 'Pendiente'
+          }
+          sx={{
+            mt: 1.25,
+            fontWeight: 700,
+            bgcolor: attendedAnyDay ? 'success.dark' : 'warning.main',
+            color: 'common.white',
+          }}
+        />
+      )}
     </Box>
   )
 }

@@ -27,7 +27,7 @@ export interface UpdateRegistrationInput {
 
 export interface RegistrationSummary {
   eventId: number
-  attended: boolean
+  attendedAnyDay: boolean
 }
 
 export interface RegistrationRepository {
@@ -37,5 +37,5 @@ export interface RegistrationRepository {
   register(input: CreateRegistrationInput): Promise<RosterEntry>
   update(input: UpdateRegistrationInput): Promise<RosterEntry>
   findByCode(eventId: number, code: string): Promise<RosterEntry | null>
-  setAttendance(registrationId: number, attended: boolean): Promise<RosterEntry>
+  setAttendance(registrationId: number, eventDayId: number, attended: boolean): Promise<RosterEntry>
 }

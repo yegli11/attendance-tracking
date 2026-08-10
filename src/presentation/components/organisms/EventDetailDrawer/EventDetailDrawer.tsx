@@ -10,7 +10,7 @@ import type { Event } from '@/domain/entities/Event'
 import type { Category } from '@/domain/entities/Category'
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { EventStatusBadge } from '@/presentation/components/molecules/EventStatusBadge'
-import { formatEventDate } from '@/shared/utils/formatEventDate'
+import { formatEventDateRange } from '@/shared/utils/formatEventDate'
 import { getEventStatus } from '@/shared/utils/getEventStatus'
 import { getCategoryColor } from '@/shared/utils/categoryColor'
 
@@ -25,6 +25,7 @@ interface Props {
 
 export function EventDetailDrawer({ event, category, registered, attended, onClose, onEnterEvent }: Props) {
   const color = getCategoryColor(category?.name ?? '')
+  const lastDay = event ? (event.days[event.days.length - 1] ?? null) : null
 
   return (
     <Drawer
@@ -47,7 +48,7 @@ export function EventDetailDrawer({ event, category, registered, attended, onClo
                 sx={{ bgcolor: color.bg, color: color.dark, fontWeight: 700 }}
               />
             )}
-            <EventStatusBadge status={getEventStatus(event.eventDate)} />
+            <EventStatusBadge status={getEventStatus(event.eventDate, lastDay?.eventDate ?? event.eventDate)} />
           </Stack>
 
           <Typography variant="h5" sx={{ fontWeight: 800 }}>
@@ -61,7 +62,7 @@ export function EventDetailDrawer({ event, category, registered, attended, onClo
               sx={{ alignItems: 'center', color: 'text.secondary', fontSize: '0.875rem' }}
             >
               <Icon name="calendar" size={15} />
-              <span>{formatEventDate(event.eventDate)}</span>
+              <span>{formatEventDateRange(event.days)}</span>
             </Stack>
             {event.location && (
               <Stack

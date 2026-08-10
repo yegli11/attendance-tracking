@@ -57,7 +57,7 @@ export function EventsPage() {
         for (const summary of summaries) {
           const current = counts.get(summary.eventId) ?? { registered: 0, attended: 0 }
           current.registered += 1
-          if (summary.attended) current.attended += 1
+          if (summary.attendedAnyDay) current.attended += 1
           counts.set(summary.eventId, current)
         }
         setEvents(eventsResult)
@@ -93,7 +93,10 @@ export function EventsPage() {
   }, [events, search, categoryFilter])
 
   const stats = useMemo(() => {
-    const todayEvents = events.filter((event) => getEventStatus(event.eventDate) === 'hoy')
+    const todayEvents = events.filter((event) => {
+      const lastDay = event.days[event.days.length - 1]
+      return getEventStatus(event.eventDate, lastDay?.eventDate ?? event.eventDate) === 'hoy'
+    })
     let inscritosTotales = 0
     for (const counts of registrationCounts.values()) inscritosTotales += counts.registered
 
