@@ -110,7 +110,7 @@ export function AttendanceTab({ eventId, roster, selectedDayId, onAttendanceChan
 
           <Stack component="form" direction="row" spacing={1.5} onSubmit={handleSearch}>
             <TextField
-              placeholder="CI-001"
+              placeholder="A-01"
               value={code}
               onChange={(e) => setCode(e.target.value.toUpperCase())}
               fullWidth
