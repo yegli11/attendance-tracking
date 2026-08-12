@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { ZodError } from 'zod'
 import dayjs, { type Dayjs } from 'dayjs'
 import Stack from '@mui/material/Stack'
+import Box from '@mui/material/Box'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import Alert from '@mui/material/Alert'
@@ -9,28 +10,41 @@ import Button from '@mui/material/Button'
 import DialogActions from '@mui/material/DialogActions'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import type { Gender } from '@/domain/entities/Gender'
+import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { updateRegistration } from '@/application/useCases/updateRegistration'
 import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
+import { BirthdateOrAgeField, type BirthInputMode } from '@/presentation/components/molecules/BirthdateOrAgeField'
 import { useToast } from '@/presentation/hooks/useToast'
 
 interface Props {
   entry: RosterEntry
   genders: Gender[]
   requiresRepresentative: boolean
+  requiresPaymentStatus: boolean
   onUpdated: (entry: RosterEntry) => void
   onCancel: () => void
 }
 
-export function EditRegistrationForm({ entry, genders, requiresRepresentative, onUpdated, onCancel }: Props) {
+export function EditRegistrationForm({
+  entry,
+  genders,
+  requiresRepresentative,
+  requiresPaymentStatus,
+  onUpdated,
+  onCancel,
+}: Props) {
   const { showSuccess, showError } = useToast()
   const [firstName, setFirstName] = useState(entry.firstName)
   const [lastName, setLastName] = useState(entry.lastName)
-  const [birthdate, setBirthdate] = useState<Dayjs | null>(dayjs(entry.birthdate))
+  const [birthInputMode, setBirthInputMode] = useState<BirthInputMode>(entry.birthdate ? 'birthdate' : 'age')
+  const [birthdate, setBirthdate] = useState<Dayjs | null>(entry.birthdate ? dayjs(entry.birthdate) : null)
+  const [ageYears, setAgeYears] = useState(entry.ageYears !== null ? String(entry.ageYears) : '')
   const [genderId, setGenderId] = useState<number | null>(
     genders.find((gender) => gender.name === entry.genderName)?.id ?? null,
   )
   const [representativeName, setRepresentativeName] = useState(entry.representativeName ?? '')
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(entry.paymentStatus ?? 'pendiente')
   const [phoneNumber, setPhoneNumber] = useState(entry.phoneNumber)
   const [alternatePhoneNumber, setAlternatePhoneNumber] = useState(entry.alternatePhoneNumber ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -46,12 +60,15 @@ export function EditRegistrationForm({ entry, genders, requiresRepresentative, o
         personId: entry.personId,
         firstName,
         lastName,
-        birthdate: birthdate?.isValid() ? birthdate.format('YYYY-MM-DD') : '',
+        birthdate: birthInputMode === 'birthdate' && birthdate?.isValid() ? birthdate.format('YYYY-MM-DD') : null,
+        ageYears: birthInputMode === 'age' && ageYears.trim() !== '' ? Number(ageYears) : null,
         genderId: genderId ?? 0,
         phoneNumber,
         alternatePhoneNumber: alternatePhoneNumber || null,
         representativeName: requiresRepresentative ? representativeName : null,
         requiresRepresentative,
+        paymentStatus: requiresPaymentStatus ? paymentStatus : null,
+        requiresPaymentStatus,
       })
       onUpdated(updated)
       showSuccess('Inscripción actualizada correctamente.')
@@ -72,16 +89,27 @@ export function EditRegistrationForm({ entry, genders, requiresRepresentative, o
         <TextField label="Apellido" value={lastName} onChange={(e) => setLastName(e.target.value)} fullWidth />
       </Stack>
 
-      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-        <DatePicker
-          label="Fecha de nacimiento"
-          value={birthdate}
-          onChange={(value) => setBirthdate(value)}
-          disableFuture
-          slotProps={{
-            textField: { fullWidth: true, slotProps: { inputLabel: { shrink: true } } },
-          }}
-        />
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'flex-start' }}>
+        <Box sx={{ flex: 1, width: '100%' }}>
+          {requiresRepresentative ? (
+            <BirthdateOrAgeField
+              mode={birthInputMode}
+              onModeChange={setBirthInputMode}
+              birthdate={birthdate}
+              onBirthdateChange={setBirthdate}
+              ageYears={ageYears}
+              onAgeYearsChange={setAgeYears}
+            />
+          ) : (
+            <DatePicker
+              label="Fecha de nacimiento"
+              value={birthdate}
+              onChange={(value) => setBirthdate(value)}
+              disableFuture
+              slotProps={{ textField: { fullWidth: true, slotProps: { inputLabel: { shrink: true } } } }}
+            />
+          )}
+        </Box>
         <TextField
           select
           label="Género"
@@ -104,6 +132,20 @@ export function EditRegistrationForm({ entry, genders, requiresRepresentative, o
           onChange={(e) => setRepresentativeName(e.target.value)}
           fullWidth
         />
+      )}
+
+      {requiresPaymentStatus && (
+        <TextField
+          select
+          label="Estado de pago"
+          value={paymentStatus}
+          onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus)}
+          fullWidth
+        >
+          <MenuItem value="pendiente">Pendiente</MenuItem>
+          <MenuItem value="financiado">Financiado</MenuItem>
+          <MenuItem value="pagado">Pagado</MenuItem>
+        </TextField>
       )}
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>

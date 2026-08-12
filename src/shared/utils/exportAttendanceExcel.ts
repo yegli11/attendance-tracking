@@ -1,7 +1,8 @@
 import writeExcelFile, { type Column } from 'write-excel-file/browser'
 import type { Event } from '@/domain/entities/Event'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
-import { ageLabel } from '@/shared/utils/calculateAge'
+import { ageLabelForPerson } from '@/shared/utils/calculateAge'
+import { paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
 
 function header(text: string) {
   return { value: text, fontWeight: 'bold' as const }
@@ -31,13 +32,18 @@ function buildColumns(event: Event): Column<RosterEntry>[] {
     { header: header('Codigo'), cell: (entry) => ({ value: entry.code }), width: 12 },
     { header: header('Nombre'), cell: (entry) => ({ value: entry.firstName }), width: 20 },
     { header: header('Apellido'), cell: (entry) => ({ value: entry.lastName }), width: 20 },
-    { header: header('Edad'), cell: (entry) => ({ value: ageLabel(entry.birthdate) }), width: 12 },
+    { header: header('Edad'), cell: (entry) => ({ value: ageLabelForPerson(entry) }), width: 12 },
     { header: header('Genero'), cell: (entry) => ({ value: entry.genderName }), width: 14 },
     { header: header('Telefono'), cell: (entry) => ({ value: entry.phoneNumber }), width: 16 },
     {
       header: header('Representante'),
       cell: (entry) => ({ value: entry.representativeName ?? '' }),
       width: 22,
+    },
+    {
+      header: header('Estado de pago'),
+      cell: (entry) => ({ value: paymentStatusLabel(entry.paymentStatus) }),
+      width: 16,
     },
     ...dayColumns,
   ]

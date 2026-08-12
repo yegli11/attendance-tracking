@@ -1,14 +1,18 @@
+import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 
 export interface CreateRegistrationInput {
   eventId: number
   firstName: string
   lastName: string
-  birthdate: string
+  /** Exactly one of birthdate/ageYears must be set. */
+  birthdate: string | null
+  ageYears: number | null
   genderId: number
   phoneNumber: string
   alternatePhoneNumber: string | null
   representativeName: string | null
+  paymentStatus: PaymentStatus | null
   /** Pass null to auto-generate a code from the event name. */
   code: string | null
 }
@@ -18,11 +22,13 @@ export interface UpdateRegistrationInput {
   personId: number
   firstName: string
   lastName: string
-  birthdate: string
+  birthdate: string | null
+  ageYears: number | null
   genderId: number
   phoneNumber: string
   alternatePhoneNumber: string | null
   representativeName: string | null
+  paymentStatus: PaymentStatus | null
 }
 
 export interface RegistrationSummary {

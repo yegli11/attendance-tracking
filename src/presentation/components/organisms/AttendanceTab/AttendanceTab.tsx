@@ -15,7 +15,7 @@ import { markAttendance } from '@/application/useCases/markAttendance'
 import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { AttendanceMatchCard } from '@/presentation/components/molecules/AttendanceMatchCard'
-import { ageLabel } from '@/shared/utils/calculateAge'
+import { ageLabelForPerson } from '@/shared/utils/calculateAge'
 import { useToast } from '@/presentation/hooks/useToast'
 
 interface Props {
@@ -176,7 +176,7 @@ export function AttendanceTab({ eventId, roster, selectedDayId, onAttendanceChan
                     {result.firstName} {result.lastName}
                   </Typography>
                   <Typography sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', mt: 0.5 }}>
-                    {ageLabel(result.birthdate)} · {result.genderName}
+                    {ageLabelForPerson(result)} · {result.genderName}
                   </Typography>
                   {result.representativeName && (
                     <Typography sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', mt: 0.25 }}>
