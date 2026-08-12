@@ -24,3 +24,14 @@ export function ageLabel(birthdate: string): string {
   }
   return `${years} ${years === 1 ? 'año' : 'años'}`
 }
+
+/**
+ * Some registrations only recorded an age (no exact birthdate). Prefer the
+ * precise birthdate-based label when available, otherwise fall back to the
+ * plain age in years.
+ */
+export function ageLabelForPerson(person: { birthdate: string | null; ageYears: number | null }): string {
+  if (person.birthdate) return ageLabel(person.birthdate)
+  if (person.ageYears !== null) return `${person.ageYears} ${person.ageYears === 1 ? 'año' : 'años'}`
+  return ''
+}

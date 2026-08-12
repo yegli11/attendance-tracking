@@ -13,28 +13,34 @@ import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import type { Gender } from '@/domain/entities/Gender'
+import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { registerPerson } from '@/application/useCases/registerPerson'
 import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
-import { ageLabel } from '@/shared/utils/calculateAge'
+import { BirthdateOrAgeField, type BirthInputMode } from '@/presentation/components/molecules/BirthdateOrAgeField'
+import { ageLabelForPerson } from '@/shared/utils/calculateAge'
 import { useToast } from '@/presentation/hooks/useToast'
 
 interface Props {
   eventId: number
   genders: Gender[]
   requiresRepresentative: boolean
+  requiresPaymentStatus: boolean
   onRegistered: (entry: RosterEntry) => void
 }
 
 type CodeMode = 'auto' | 'manual'
 
-export function RegisterTab({ eventId, genders, requiresRepresentative, onRegistered }: Props) {
+export function RegisterTab({ eventId, genders, requiresRepresentative, requiresPaymentStatus, onRegistered }: Props) {
   const { showSuccess, showError } = useToast()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
+  const [birthInputMode, setBirthInputMode] = useState<BirthInputMode>('birthdate')
   const [birthdate, setBirthdate] = useState<Dayjs | null>(null)
+  const [ageYears, setAgeYears] = useState('')
   const [genderId, setGenderId] = useState<number | null>(null)
   const [representativeName, setRepresentativeName] = useState('')
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('pendiente')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [alternatePhoneNumber, setAlternatePhoneNumber] = useState('')
   const [codeMode, setCodeMode] = useState<CodeMode>('auto')
@@ -46,9 +52,12 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, onRegist
   function resetForm() {
     setFirstName('')
     setLastName('')
+    setBirthInputMode('birthdate')
     setBirthdate(null)
+    setAgeYears('')
     setGenderId(null)
     setRepresentativeName('')
+    setPaymentStatus('pendiente')
     setPhoneNumber('')
     setAlternatePhoneNumber('')
     setCodeMode('auto')
@@ -64,12 +73,15 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, onRegist
         eventId,
         firstName,
         lastName,
-        birthdate: birthdate?.isValid() ? birthdate.format('YYYY-MM-DD') : '',
+        birthdate: birthInputMode === 'birthdate' && birthdate?.isValid() ? birthdate.format('YYYY-MM-DD') : null,
+        ageYears: birthInputMode === 'age' && ageYears.trim() !== '' ? Number(ageYears) : null,
         genderId: genderId ?? 0,
         phoneNumber,
         alternatePhoneNumber: alternatePhoneNumber || null,
         representativeName: requiresRepresentative ? representativeName : null,
         requiresRepresentative,
+        paymentStatus: requiresPaymentStatus ? paymentStatus : null,
+        requiresPaymentStatus,
         code: codeMode === 'manual' ? manualCode : null,
       })
       setLastTicket(entry)
@@ -105,16 +117,27 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, onRegist
               <TextField label="Apellido" value={lastName} onChange={(e) => setLastName(e.target.value)} fullWidth />
             </Stack>
 
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <DatePicker
-                label="Fecha de nacimiento"
-                value={birthdate}
-                onChange={(value) => setBirthdate(value)}
-                disableFuture
-                slotProps={{
-                  textField: { fullWidth: true, slotProps: { inputLabel: { shrink: true } } },
-                }}
-              />
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'flex-start' }}>
+              <Box sx={{ flex: 1, width: '100%' }}>
+                {requiresRepresentative ? (
+                  <BirthdateOrAgeField
+                    mode={birthInputMode}
+                    onModeChange={setBirthInputMode}
+                    birthdate={birthdate}
+                    onBirthdateChange={setBirthdate}
+                    ageYears={ageYears}
+                    onAgeYearsChange={setAgeYears}
+                  />
+                ) : (
+                  <DatePicker
+                    label="Fecha de nacimiento"
+                    value={birthdate}
+                    onChange={(value) => setBirthdate(value)}
+                    disableFuture
+                    slotProps={{ textField: { fullWidth: true, slotProps: { inputLabel: { shrink: true } } } }}
+                  />
+                )}
+              </Box>
               <TextField
                 select
                 label="Género"
@@ -138,6 +161,20 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, onRegist
                 onChange={(e) => setRepresentativeName(e.target.value)}
                 fullWidth
               />
+            )}
+
+            {requiresPaymentStatus && (
+              <TextField
+                select
+                label="Estado de pago"
+                value={paymentStatus}
+                onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus)}
+                fullWidth
+              >
+                <MenuItem value="pendiente">Pendiente</MenuItem>
+                <MenuItem value="financiado">Financiado</MenuItem>
+                <MenuItem value="pagado">Pagado</MenuItem>
+              </TextField>
             )}
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
@@ -221,7 +258,7 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, onRegist
                   {lastTicket.firstName} {lastTicket.lastName}
                 </Typography>
                 <Typography sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', mt: 0.5 }}>
-                  {ageLabel(lastTicket.birthdate)} · {lastTicket.genderName}
+                  {ageLabelForPerson(lastTicket)} · {lastTicket.genderName}
                 </Typography>
               </Box>
               <Stack

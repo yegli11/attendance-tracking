@@ -16,10 +16,12 @@ function createRepository(): RegistrationRepository {
       firstName: 'María',
       lastName: 'Pérez',
       birthdate: '2015-01-01',
+      ageYears: null,
       genderName: 'Femenino',
       phoneNumber: '+56911111111',
       alternatePhoneNumber: null,
       representativeName: 'Ana Pérez',
+      paymentStatus: null,
     }),
     update: vi.fn(),
     findByCode: vi.fn(),
@@ -32,9 +34,12 @@ const baseInput = {
   firstName: 'María',
   lastName: 'Pérez',
   birthdate: '2015-01-01',
+  ageYears: null,
   genderId: 1,
   phoneNumber: '+56911111111',
   alternatePhoneNumber: null,
+  paymentStatus: null,
+  requiresPaymentStatus: false,
   code: null,
 }
 
@@ -87,5 +92,65 @@ describe('registerPerson', () => {
       }),
     ).rejects.toThrow(ZodError)
     expect(repository.register).not.toHaveBeenCalled()
+  })
+
+  it('registers a child using only an age when the category requires a representative', async () => {
+    const repository = createRepository()
+
+    await registerPerson(repository, {
+      ...baseInput,
+      birthdate: null,
+      ageYears: 8,
+      representativeName: 'Ana Pérez',
+      requiresRepresentative: true,
+    })
+
+    expect(repository.register).toHaveBeenCalledWith(
+      expect.objectContaining({ birthdate: null, ageYears: 8 }),
+    )
+  })
+
+  it('rejects a child registration with neither birthdate nor age', async () => {
+    const repository = createRepository()
+
+    await expect(
+      registerPerson(repository, {
+        ...baseInput,
+        birthdate: null,
+        ageYears: null,
+        representativeName: 'Ana Pérez',
+        requiresRepresentative: true,
+      }),
+    ).rejects.toThrow(ZodError)
+    expect(repository.register).not.toHaveBeenCalled()
+  })
+
+  it('rejects a missing payment status when the category requires one', async () => {
+    const repository = createRepository()
+
+    await expect(
+      registerPerson(repository, {
+        ...baseInput,
+        representativeName: null,
+        requiresRepresentative: false,
+        requiresPaymentStatus: true,
+        paymentStatus: null,
+      }),
+    ).rejects.toThrow(ZodError)
+    expect(repository.register).not.toHaveBeenCalled()
+  })
+
+  it('registers a person with a payment status when the category requires one', async () => {
+    const repository = createRepository()
+
+    await registerPerson(repository, {
+      ...baseInput,
+      representativeName: null,
+      requiresRepresentative: false,
+      requiresPaymentStatus: true,
+      paymentStatus: 'pendiente',
+    })
+
+    expect(repository.register).toHaveBeenCalledWith(expect.objectContaining({ paymentStatus: 'pendiente' }))
   })
 })
