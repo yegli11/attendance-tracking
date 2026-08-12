@@ -73,6 +73,7 @@ export type Database = {
           created_at: string
           event_id: number
           id: number
+          payment_status: string | null
           person_id: number
         }
         Insert: {
@@ -80,6 +81,7 @@ export type Database = {
           created_at?: string
           event_id: number
           id?: never
+          payment_status?: string | null
           person_id: number
         }
         Update: {
@@ -87,6 +89,7 @@ export type Database = {
           created_at?: string
           event_id?: number
           id?: never
+          payment_status?: string | null
           person_id?: number
         }
         Relationships: [
@@ -256,7 +259,8 @@ export type Database = {
       }
       person: {
         Row: {
-          birthdate: string
+          age_years: number | null
+          birthdate: string | null
           created_at: string
           gender_id: number
           id: number
@@ -264,7 +268,8 @@ export type Database = {
           name: string
         }
         Insert: {
-          birthdate: string
+          age_years?: number | null
+          birthdate?: string | null
           created_at?: string
           gender_id: number
           id?: never
@@ -272,7 +277,8 @@ export type Database = {
           name: string
         }
         Update: {
-          birthdate?: string
+          age_years?: number | null
+          birthdate?: string | null
           created_at?: string
           gender_id?: number
           id?: never

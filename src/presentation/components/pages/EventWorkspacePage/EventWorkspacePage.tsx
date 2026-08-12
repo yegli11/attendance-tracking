@@ -31,6 +31,7 @@ import { AttendanceTab } from '@/presentation/components/organisms/AttendanceTab
 import { formatEventDateRange, formatEventDayLabel } from '@/shared/utils/formatEventDate'
 import { getCategoryColor } from '@/shared/utils/categoryColor'
 import { categoryRequiresRepresentative } from '@/shared/utils/categoryRequiresRepresentative'
+import { categoryRequiresPaymentStatus } from '@/shared/utils/categoryRequiresPaymentStatus'
 import { exportAttendanceExcel } from '@/shared/utils/exportAttendanceExcel'
 import { useToast } from '@/presentation/hooks/useToast'
 
@@ -94,6 +95,7 @@ export function EventWorkspacePage() {
 
   const category = categories.find((item) => item.id === event?.categoryId)
   const requiresRepresentative = category ? categoryRequiresRepresentative(category.name) : false
+  const requiresPaymentStatus = category ? categoryRequiresPaymentStatus(category.name) : false
 
   const stats = useMemo(() => {
     const registered = roster.length
@@ -271,6 +273,7 @@ export function EventWorkspacePage() {
           days={event.days}
           genders={genders}
           requiresRepresentative={requiresRepresentative}
+          requiresPaymentStatus={requiresPaymentStatus}
           onUpdated={handleRosterEntryChange}
         />
       )}
@@ -279,6 +282,7 @@ export function EventWorkspacePage() {
           eventId={event.id}
           genders={genders}
           requiresRepresentative={requiresRepresentative}
+          requiresPaymentStatus={requiresPaymentStatus}
           onRegistered={handleRegistered}
         />
       )}

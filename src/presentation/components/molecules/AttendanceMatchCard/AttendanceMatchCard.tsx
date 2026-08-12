@@ -4,7 +4,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
-import { ageLabel } from '@/shared/utils/calculateAge'
+import { ageLabelForPerson } from '@/shared/utils/calculateAge'
 
 interface Props {
   entry: RosterEntry
@@ -34,7 +34,7 @@ export function AttendanceMatchCard({ entry, onSelect }: Props) {
             {entry.firstName} {entry.lastName}
           </Typography>
           <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-            {ageLabel(entry.birthdate)}
+            {ageLabelForPerson(entry)}
           </Typography>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             Representante: {entry.representativeName ?? 'sin registrar'}

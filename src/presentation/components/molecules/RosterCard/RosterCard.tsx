@@ -7,7 +7,7 @@ import Tooltip from '@mui/material/Tooltip'
 import type { EventDay } from '@/domain/entities/EventDay'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { Icon } from '@/presentation/components/atoms/Icon'
-import { ageLabel } from '@/shared/utils/calculateAge'
+import { ageLabelForPerson } from '@/shared/utils/calculateAge'
 
 interface Props {
   entry: RosterEntry
@@ -36,7 +36,7 @@ export function RosterCard({ entry, days, onEdit }: Props) {
             {entry.firstName} {entry.lastName}
           </Typography>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            {ageLabel(entry.birthdate)}
+            {ageLabelForPerson(entry)}
           </Typography>
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>

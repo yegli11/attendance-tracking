@@ -1,3 +1,5 @@
+import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
+
 // One registration's attendance state for a single day of its event.
 export interface DayAttendance {
   eventDayId: number
@@ -16,9 +18,12 @@ export interface RosterEntry {
   personId: number
   firstName: string
   lastName: string
-  birthdate: string
+  /** Exactly one of birthdate/ageYears is guaranteed to be set. */
+  birthdate: string | null
+  ageYears: number | null
   genderName: string
   phoneNumber: string
   alternatePhoneNumber: string | null
   representativeName: string | null
+  paymentStatus: PaymentStatus | null
 }

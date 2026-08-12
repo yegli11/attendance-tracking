@@ -17,10 +17,11 @@ interface Props {
   days: EventDay[]
   genders: Gender[]
   requiresRepresentative: boolean
+  requiresPaymentStatus: boolean
   onUpdated: (entry: RosterEntry) => void
 }
 
-export function RosterTab({ roster, days, genders, requiresRepresentative, onUpdated }: Props) {
+export function RosterTab({ roster, days, genders, requiresRepresentative, requiresPaymentStatus, onUpdated }: Props) {
   const [search, setSearch] = useState('')
   const [editingEntry, setEditingEntry] = useState<RosterEntry | null>(null)
 
@@ -75,6 +76,7 @@ export function RosterTab({ roster, days, genders, requiresRepresentative, onUpd
             entry={editingEntry}
             genders={genders}
             requiresRepresentative={requiresRepresentative}
+            requiresPaymentStatus={requiresPaymentStatus}
             onUpdated={(entry) => {
               onUpdated(entry)
               setEditingEntry(null)
