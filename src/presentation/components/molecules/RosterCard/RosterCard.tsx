@@ -5,14 +5,22 @@ import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import type { EventDay } from '@/domain/entities/EventDay'
+import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
+import { paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
 
 interface Props {
   entry: RosterEntry
   days: EventDay[]
   onEdit: () => void
+}
+
+const PAYMENT_STATUS_COLOR: Record<PaymentStatus, { bg: string; color: string }> = {
+  pagado: { bg: 'success.main', color: 'common.white' },
+  financiado: { bg: 'info.main', color: 'common.white' },
+  pendiente: { bg: 'warning.main', color: 'common.white' },
 }
 
 export function RosterCard({ entry, days, onEdit }: Props) {
@@ -48,6 +56,29 @@ export function RosterCard({ entry, days, onEdit }: Props) {
           </Tooltip>
         </Stack>
       </Stack>
+
+      {entry.paymentStatus && (
+        <Stack
+          direction="row"
+          spacing={0.5}
+          sx={{
+            mt: 1,
+            py: 0.5,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 1,
+            fontWeight: 700,
+            fontSize: '0.75rem',
+            textTransform: 'uppercase',
+            letterSpacing: '0.02em',
+            bgcolor: PAYMENT_STATUS_COLOR[entry.paymentStatus].bg,
+            color: PAYMENT_STATUS_COLOR[entry.paymentStatus].color,
+          }}
+        >
+          {entry.paymentStatus === 'pagado' && <Icon name="check" size={11} />}
+          <span>{paymentStatusLabel(entry.paymentStatus)}</span>
+        </Stack>
+      )}
 
       <Stack
         direction="row"
