@@ -120,6 +120,10 @@ export function EventWorkspacePage() {
     )
   }
 
+  function handleRosterEntryDeleted(registrationId: number) {
+    setRoster((current) => current.filter((item) => item.registrationId !== registrationId))
+  }
+
   const hasAnyAttendance = roster.some((entry) => entry.attendance.some((day) => day.attendedAt !== null))
 
   async function handleExportAttendance() {
@@ -275,6 +279,7 @@ export function EventWorkspacePage() {
           requiresRepresentative={requiresRepresentative}
           requiresPaymentStatus={requiresPaymentStatus}
           onUpdated={handleRosterEntryChange}
+          onDeleted={handleRosterEntryDeleted}
         />
       )}
       {tab === 'inscribir' && (

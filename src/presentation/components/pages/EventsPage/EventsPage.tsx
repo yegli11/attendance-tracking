@@ -97,25 +97,11 @@ export function EventsPage() {
       const lastDay = event.days[event.days.length - 1]
       return getEventStatus(event.eventDate, lastDay?.eventDate ?? event.eventDate) === 'hoy'
     })
-    let inscritosTotales = 0
-    for (const counts of registrationCounts.values()) inscritosTotales += counts.registered
-
-    let inscritosHoy = 0
-    let asistieronHoy = 0
-    for (const event of todayEvents) {
-      const counts = registrationCounts.get(event.id)
-      if (!counts) continue
-      inscritosHoy += counts.registered
-      asistieronHoy += counts.attended
-    }
-
     return {
       total: events.length,
       hoy: todayEvents.length,
-      inscritosTotales,
-      asistenciaHoy: inscritosHoy > 0 ? `${Math.round((asistieronHoy / inscritosHoy) * 100)}%` : '—',
     }
-  }, [events, registrationCounts])
+  }, [events])
 
   const selectedEventCounts = selectedEvent
     ? (registrationCounts.get(selectedEvent.id) ?? { registered: 0, attended: 0 })
@@ -153,12 +139,6 @@ export function EventsPage() {
           </Grid>
           <Grid size={{ xs: 6, md: 3 }}>
             <StatCard icon="clock" label="Hoy" value={stats.hoy} />
-          </Grid>
-          <Grid size={{ xs: 6, md: 3 }}>
-            <StatCard icon="users" label="Inscritos totales" value={stats.inscritosTotales} />
-          </Grid>
-          <Grid size={{ xs: 6, md: 3 }}>
-            <StatCard icon="check" label="Asistencia hoy" value={stats.asistenciaHoy} />
           </Grid>
         </Grid>
       )}

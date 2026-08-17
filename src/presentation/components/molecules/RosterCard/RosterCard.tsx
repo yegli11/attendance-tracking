@@ -8,13 +8,16 @@ import type { EventDay } from '@/domain/entities/EventDay'
 import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { Icon } from '@/presentation/components/atoms/Icon'
+import { useAuth } from '@/presentation/hooks/useAuth'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
 import { paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
+import { REGISTRATION_DELETE_EMAIL } from '@/shared/constants/permissions'
 
 interface Props {
   entry: RosterEntry
   days: EventDay[]
   onEdit: () => void
+  onDelete: () => void
 }
 
 const PAYMENT_STATUS_COLOR: Record<PaymentStatus, { bg: string; color: string }> = {
@@ -23,9 +26,16 @@ const PAYMENT_STATUS_COLOR: Record<PaymentStatus, { bg: string; color: string }>
   pendiente: { bg: 'warning.main', color: 'common.white' },
 }
 
-export function RosterCard({ entry, days, onEdit }: Props) {
+export function RosterCard({ entry, days, onEdit, onDelete }: Props) {
+  const { user } = useAuth()
+  const canDelete = user?.email === REGISTRATION_DELETE_EMAIL
   const isMultiDay = days.length > 1
   const attendedAnyDay = entry.attendance.some((day) => day.attendedAt !== null)
+
+  function handleDelete() {
+    const confirmed = window.confirm(`¿Eliminar a ${entry.firstName} ${entry.lastName} de este evento?`)
+    if (confirmed) onDelete()
+  }
 
   return (
     <Box
@@ -54,6 +64,13 @@ export function RosterCard({ entry, days, onEdit }: Props) {
               <Icon name="edit" size={14} />
             </IconButton>
           </Tooltip>
+          {canDelete && (
+            <Tooltip title="Eliminar del evento">
+              <IconButton size="small" onClick={handleDelete} aria-label="Eliminar del evento" color="error">
+                <Icon name="trash" size={14} />
+              </IconButton>
+            </Tooltip>
+          )}
         </Stack>
       </Stack>
 

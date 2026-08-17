@@ -7,10 +7,13 @@ import Typography from '@mui/material/Typography'
 import type { Gender } from '@/domain/entities/Gender'
 import type { EventDay } from '@/domain/entities/EventDay'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
+import { deleteRegistration } from '@/application/useCases/deleteRegistration'
+import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { RosterCard } from '@/presentation/components/molecules/RosterCard'
 import { Modal } from '@/presentation/components/organisms/Modal'
 import { EditRegistrationForm } from '@/presentation/components/organisms/EditRegistrationForm'
+import { useToast } from '@/presentation/hooks/useToast'
 
 interface Props {
   roster: RosterEntry[]
@@ -19,9 +22,19 @@ interface Props {
   requiresRepresentative: boolean
   requiresPaymentStatus: boolean
   onUpdated: (entry: RosterEntry) => void
+  onDeleted: (registrationId: number) => void
 }
 
-export function RosterTab({ roster, days, genders, requiresRepresentative, requiresPaymentStatus, onUpdated }: Props) {
+export function RosterTab({
+  roster,
+  days,
+  genders,
+  requiresRepresentative,
+  requiresPaymentStatus,
+  onUpdated,
+  onDeleted,
+}: Props) {
+  const { showSuccess, showError } = useToast()
   const [search, setSearch] = useState('')
   const [editingEntry, setEditingEntry] = useState<RosterEntry | null>(null)
 
@@ -32,6 +45,16 @@ export function RosterTab({ roster, days, genders, requiresRepresentative, requi
       `${entry.firstName} ${entry.lastName} ${entry.code}`.toLowerCase().includes(query),
     )
   }, [roster, search])
+
+  async function handleDelete(entry: RosterEntry) {
+    try {
+      await deleteRegistration(supabaseRegistrationRepository, entry.registrationId)
+      onDeleted(entry.registrationId)
+      showSuccess(`${entry.firstName} ${entry.lastName} fue eliminado del evento.`)
+    } catch {
+      showError('No se pudo eliminar la inscripción.')
+    }
+  }
 
   return (
     <Stack spacing={2}>
@@ -64,7 +87,12 @@ export function RosterTab({ roster, days, genders, requiresRepresentative, requi
         <Grid container spacing={2}>
           {filtered.map((entry) => (
             <Grid key={entry.registrationId} size={{ xs: 12, sm: 6, md: 4 }}>
-              <RosterCard entry={entry} days={days} onEdit={() => setEditingEntry(entry)} />
+              <RosterCard
+                entry={entry}
+                days={days}
+                onEdit={() => setEditingEntry(entry)}
+                onDelete={() => handleDelete(entry)}
+              />
             </Grid>
           ))}
         </Grid>
