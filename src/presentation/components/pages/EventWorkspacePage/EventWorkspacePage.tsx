@@ -126,7 +126,7 @@ export function EventWorkspacePage() {
     if (!event) return
     setIsExporting(true)
     try {
-      await exportAttendanceExcel(event, roster)
+      await exportAttendanceExcel(event, roster, requiresRepresentative, requiresPaymentStatus)
     } catch {
       showError('No se pudo generar el Excel de asistencia.')
     } finally {
