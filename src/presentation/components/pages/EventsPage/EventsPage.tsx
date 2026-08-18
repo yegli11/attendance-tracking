@@ -40,6 +40,7 @@ export function EventsPage() {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<number | 'all'>('all')
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null)
+  const [retryToken, setRetryToken] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -73,7 +74,7 @@ export function EventsPage() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [retryToken])
 
   async function handleCreateEvent(input: CreateEventInput) {
     const created = await createEvent(supabaseEventRepository, input)
@@ -198,7 +199,16 @@ export function EventsPage() {
         </Box>
       )}
       {status === 'error' && (
-        <Alert severity="error">No se pudieron cargar los eventos. Intenta de nuevo.</Alert>
+        <Alert
+          severity="error"
+          action={
+            <Button color="inherit" size="small" onClick={() => setRetryToken((token) => token + 1)}>
+              Reintentar
+            </Button>
+          }
+        >
+          No se pudieron cargar los eventos. Revisa tu conexión e intenta de nuevo.
+        </Alert>
       )}
       {status === 'ready' && (
         <EventList
