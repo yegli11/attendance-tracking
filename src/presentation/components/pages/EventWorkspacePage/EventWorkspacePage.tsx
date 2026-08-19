@@ -52,6 +52,7 @@ export function EventWorkspacePage() {
   const [tab, setTab] = useState<TabKey>('lista')
   const [isExporting, setIsExporting] = useState(false)
   const [selectedDayId, setSelectedDayId] = useState<number | null>(null)
+  const [retryToken, setRetryToken] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -91,7 +92,7 @@ export function EventWorkspacePage() {
     return () => {
       cancelled = true
     }
-  }, [id])
+  }, [id, retryToken])
 
   const category = categories.find((item) => item.id === event?.categoryId)
   const requiresRepresentative = category ? categoryRequiresRepresentative(category.name) : false
@@ -120,13 +121,17 @@ export function EventWorkspacePage() {
     )
   }
 
+  function handleRosterEntryDeleted(registrationId: number) {
+    setRoster((current) => current.filter((item) => item.registrationId !== registrationId))
+  }
+
   const hasAnyAttendance = roster.some((entry) => entry.attendance.some((day) => day.attendedAt !== null))
 
   async function handleExportAttendance() {
     if (!event) return
     setIsExporting(true)
     try {
-      await exportAttendanceExcel(event, roster)
+      await exportAttendanceExcel(event, roster, requiresRepresentative, requiresPaymentStatus)
     } catch {
       showError('No se pudo generar el Excel de asistencia.')
     } finally {
@@ -152,8 +157,19 @@ export function EventWorkspacePage() {
         >
           Volver a mis eventos
         </Button>
-        <Alert severity="error">
-          {status === 'not-found' ? 'No se encontró el evento.' : 'No se pudo cargar el evento. Intenta de nuevo.'}
+        <Alert
+          severity="error"
+          action={
+            status === 'error' ? (
+              <Button color="inherit" size="small" onClick={() => setRetryToken((token) => token + 1)}>
+                Reintentar
+              </Button>
+            ) : undefined
+          }
+        >
+          {status === 'not-found'
+            ? 'No se encontró el evento.'
+            : 'No se pudo cargar el evento. Revisa tu conexión e intenta de nuevo.'}
         </Alert>
       </Stack>
     )
@@ -275,6 +291,7 @@ export function EventWorkspacePage() {
           requiresRepresentative={requiresRepresentative}
           requiresPaymentStatus={requiresPaymentStatus}
           onUpdated={handleRosterEntryChange}
+          onDeleted={handleRosterEntryDeleted}
         />
       )}
       {tab === 'inscribir' && (

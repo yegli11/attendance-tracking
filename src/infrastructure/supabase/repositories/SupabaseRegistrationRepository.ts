@@ -342,4 +342,9 @@ export const supabaseRegistrationRepository: RegistrationRepository = {
     if (!entry) throw new Error('No se pudo actualizar la asistencia.')
     return entry
   },
+
+  async remove(registrationId) {
+    const { error } = await supabase.schema('event').from('registration').delete().eq('id', registrationId)
+    if (error) throw error
+  },
 }

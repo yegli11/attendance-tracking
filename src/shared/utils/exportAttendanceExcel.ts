@@ -19,7 +19,11 @@ function formatAttendedAt(attendedAt: string | null): string {
   })
 }
 
-function buildColumns(event: Event): Column<RosterEntry>[] {
+function buildColumns(
+  event: Event,
+  requiresRepresentative: boolean,
+  requiresPaymentStatus: boolean,
+): Column<RosterEntry>[] {
   const dayColumns: Column<RosterEntry>[] = event.days.map((day) => ({
     header: header(event.days.length > 1 ? `Día ${day.dayNumber}` : 'Hora de ingreso'),
     cell: (entry) => ({
@@ -35,16 +39,24 @@ function buildColumns(event: Event): Column<RosterEntry>[] {
     { header: header('Edad'), cell: (entry) => ({ value: ageLabelForPerson(entry) }), width: 12 },
     { header: header('Genero'), cell: (entry) => ({ value: entry.genderName }), width: 14 },
     { header: header('Telefono'), cell: (entry) => ({ value: entry.phoneNumber }), width: 16 },
-    {
-      header: header('Representante'),
-      cell: (entry) => ({ value: entry.representativeName ?? '' }),
-      width: 22,
-    },
-    {
-      header: header('Estado de pago'),
-      cell: (entry) => ({ value: paymentStatusLabel(entry.paymentStatus) }),
-      width: 16,
-    },
+    ...(requiresRepresentative
+      ? [
+          {
+            header: header('Representante'),
+            cell: (entry: RosterEntry) => ({ value: entry.representativeName ?? '' }),
+            width: 22,
+          },
+        ]
+      : []),
+    ...(requiresPaymentStatus
+      ? [
+          {
+            header: header('Estado de pago'),
+            cell: (entry: RosterEntry) => ({ value: paymentStatusLabel(entry.paymentStatus) }),
+            width: 16,
+          },
+        ]
+      : []),
     ...dayColumns,
   ]
 }
@@ -57,8 +69,15 @@ function sanitizeFileNamePart(value: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-export async function exportAttendanceExcel(event: Event, roster: RosterEntry[]): Promise<void> {
+export async function exportAttendanceExcel(
+  event: Event,
+  roster: RosterEntry[],
+  requiresRepresentative: boolean,
+  requiresPaymentStatus: boolean,
+): Promise<void> {
   const attendees = roster.filter((entry) => entry.attendance.some((day) => day.attendedAt !== null))
   const fileName = `asistencia-${sanitizeFileNamePart(event.name)}.xlsx`
-  await writeExcelFile(attendees, { columns: buildColumns(event) }).toFile(fileName)
+  await writeExcelFile(attendees, { columns: buildColumns(event, requiresRepresentative, requiresPaymentStatus) }).toFile(
+    fileName,
+  )
 }
