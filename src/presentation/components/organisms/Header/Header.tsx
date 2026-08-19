@@ -36,7 +36,7 @@ export function Header() {
 
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexShrink: 0, minWidth: 0 }}>
           <Avatar
-            src="/logo.svg"
+            src="/logo.png"
             alt="Logo"
             sx={{ width: 32, height: 32, border: '1px solid rgba(255,255,255,0.25)' }}
           />

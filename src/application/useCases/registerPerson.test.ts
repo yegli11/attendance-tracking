@@ -26,6 +26,7 @@ function createRepository(): RegistrationRepository {
     update: vi.fn(),
     findByCode: vi.fn(),
     setAttendance: vi.fn(),
+    remove: vi.fn(),
   }
 }
 

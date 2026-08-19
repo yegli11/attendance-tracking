@@ -44,4 +44,5 @@ export interface RegistrationRepository {
   update(input: UpdateRegistrationInput): Promise<RosterEntry>
   findByCode(eventId: number, code: string): Promise<RosterEntry | null>
   setAttendance(registrationId: number, eventDayId: number, attended: boolean): Promise<RosterEntry>
+  remove(registrationId: number): Promise<void>
 }
