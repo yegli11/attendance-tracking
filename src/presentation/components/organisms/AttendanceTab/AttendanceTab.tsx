@@ -16,6 +16,7 @@ import { supabaseRegistrationRepository } from '@/infrastructure/supabase/reposi
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { AttendanceMatchCard } from '@/presentation/components/molecules/AttendanceMatchCard'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
+import { teamColor, teamLabel } from '@/shared/utils/teamLabel'
 import { useToast } from '@/presentation/hooks/useToast'
 
 interface Props {
@@ -182,6 +183,18 @@ export function AttendanceTab({ eventId, roster, selectedDayId, onAttendanceChan
                     <Typography sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', mt: 0.25 }}>
                       Representante: {result.representativeName}
                     </Typography>
+                  )}
+                  {result.team && (
+                    <Chip
+                      label={`Equipo ${teamLabel(result.team)}`}
+                      size="small"
+                      sx={{
+                        mt: 0.75,
+                        fontWeight: 700,
+                        bgcolor: teamColor(result.team).bg,
+                        color: teamColor(result.team).color,
+                      }}
+                    />
                   )}
                 </Box>
                 <Stack

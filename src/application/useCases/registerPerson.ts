@@ -16,6 +16,7 @@ const registerPersonSchema = z
     requiresRepresentative: z.boolean(),
     paymentStatus: z.enum(['pendiente', 'financiado', 'pagado']).optional().nullable(),
     requiresPaymentStatus: z.boolean(),
+    team: z.enum(['naranja', 'rojo', 'verde', 'azul']).optional().nullable(),
     code: z.string().trim().optional().nullable(),
   })
   .superRefine((value, ctx) => {
@@ -68,6 +69,7 @@ export async function registerPerson(
     alternatePhoneNumber: parsed.alternatePhoneNumber || null,
     representativeName: parsed.representativeName || null,
     paymentStatus: parsed.paymentStatus || null,
+    team: parsed.team || null,
     code: parsed.code || null,
   }
   return repository.register(registrationInput)

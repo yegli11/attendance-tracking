@@ -3,6 +3,7 @@ import type { Event } from '@/domain/entities/Event'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
 import { paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
+import { teamLabel } from '@/shared/utils/teamLabel'
 
 function header(text: string) {
   return { value: text, fontWeight: 'bold' as const }
@@ -45,6 +46,11 @@ function buildColumns(
             header: header('Representante'),
             cell: (entry: RosterEntry) => ({ value: entry.representativeName ?? '' }),
             width: 22,
+          },
+          {
+            header: header('Equipo'),
+            cell: (entry: RosterEntry) => ({ value: teamLabel(entry.team) }),
+            width: 14,
           },
         ]
       : []),

@@ -11,6 +11,7 @@ import { Icon } from '@/presentation/components/atoms/Icon'
 import { useAuth } from '@/presentation/hooks/useAuth'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
 import { paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
+import { teamColor, teamLabel } from '@/shared/utils/teamLabel'
 import { REGISTRATION_DELETE_EMAIL } from '@/shared/constants/permissions'
 
 interface Props {
@@ -56,6 +57,18 @@ export function RosterCard({ entry, days, onEdit, onDelete }: Props) {
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {ageLabelForPerson(entry)}
           </Typography>
+          {entry.team && (
+            <Chip
+              label={teamLabel(entry.team)}
+              size="small"
+              sx={{
+                mt: 0.5,
+                fontWeight: 700,
+                bgcolor: teamColor(entry.team).bg,
+                color: teamColor(entry.team).color,
+              }}
+            />
+          )}
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
           <Chip label={entry.code} size="small" color="primary" sx={{ fontWeight: 700 }} />

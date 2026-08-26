@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
+import { teamColor, teamLabel } from '@/shared/utils/teamLabel'
 
 interface Props {
   entry: RosterEntry
@@ -40,7 +41,16 @@ export function AttendanceMatchCard({ entry, onSelect }: Props) {
             Representante: {entry.representativeName ?? 'sin registrar'}
           </Typography>
         </Box>
-        <Chip label={entry.code} size="small" sx={{ fontWeight: 700 }} />
+        <Stack spacing={0.5} sx={{ alignItems: 'flex-end' }}>
+          <Chip label={entry.code} size="small" sx={{ fontWeight: 700 }} />
+          {entry.team && (
+            <Chip
+              label={teamLabel(entry.team)}
+              size="small"
+              sx={{ fontWeight: 700, bgcolor: teamColor(entry.team).bg, color: teamColor(entry.team).color }}
+            />
+          )}
+        </Stack>
       </Stack>
     </ButtonBase>
   )
