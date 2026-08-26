@@ -1,4 +1,5 @@
 import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
+import type { Team } from '@/domain/entities/Team'
 
 // One registration's attendance state for a single day of its event.
 export interface DayAttendance {
@@ -26,4 +27,5 @@ export interface RosterEntry {
   alternatePhoneNumber: string | null
   representativeName: string | null
   paymentStatus: PaymentStatus | null
+  team: Team | null
 }

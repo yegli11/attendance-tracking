@@ -75,6 +75,7 @@ export type Database = {
           id: number
           payment_status: string | null
           person_id: number
+          team: string | null
         }
         Insert: {
           code: string
@@ -83,6 +84,7 @@ export type Database = {
           id?: never
           payment_status?: string | null
           person_id: number
+          team?: string | null
         }
         Update: {
           code?: string
@@ -91,6 +93,7 @@ export type Database = {
           id?: never
           payment_status?: string | null
           person_id?: number
+          team?: string | null
         }
         Relationships: [
           {

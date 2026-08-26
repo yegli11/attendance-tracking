@@ -11,11 +11,15 @@ import DialogActions from '@mui/material/DialogActions'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import type { Gender } from '@/domain/entities/Gender'
 import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
+import type { Team } from '@/domain/entities/Team'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { updateRegistration } from '@/application/useCases/updateRegistration'
 import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
 import { BirthdateOrAgeField, type BirthInputMode } from '@/presentation/components/molecules/BirthdateOrAgeField'
+import { teamLabel } from '@/shared/utils/teamLabel'
 import { useToast } from '@/presentation/hooks/useToast'
+
+const TEAMS: Team[] = ['naranja', 'rojo', 'verde', 'azul']
 
 interface Props {
   entry: RosterEntry
@@ -45,6 +49,7 @@ export function EditRegistrationForm({
   )
   const [representativeName, setRepresentativeName] = useState(entry.representativeName ?? '')
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(entry.paymentStatus ?? 'pendiente')
+  const [team, setTeam] = useState<Team | ''>(entry.team ?? '')
   const [phoneNumber, setPhoneNumber] = useState(entry.phoneNumber)
   const [alternatePhoneNumber, setAlternatePhoneNumber] = useState(entry.alternatePhoneNumber ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -69,6 +74,7 @@ export function EditRegistrationForm({
         requiresRepresentative,
         paymentStatus: requiresPaymentStatus ? paymentStatus : null,
         requiresPaymentStatus,
+        team: requiresRepresentative && team ? team : null,
       })
       onUpdated(updated)
       showSuccess('Inscripción actualizada correctamente.')
@@ -132,6 +138,17 @@ export function EditRegistrationForm({
           onChange={(e) => setRepresentativeName(e.target.value)}
           fullWidth
         />
+      )}
+
+      {requiresRepresentative && (
+        <TextField select label="Equipo" value={team} onChange={(e) => setTeam(e.target.value as Team | '')} fullWidth>
+          <MenuItem value="">Sin asignar</MenuItem>
+          {TEAMS.map((value) => (
+            <MenuItem key={value} value={value}>
+              {teamLabel(value)}
+            </MenuItem>
+          ))}
+        </TextField>
       )}
 
       {requiresPaymentStatus && (

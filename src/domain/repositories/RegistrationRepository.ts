@@ -1,4 +1,5 @@
 import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
+import type { Team } from '@/domain/entities/Team'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 
 export interface CreateRegistrationInput {
@@ -13,6 +14,7 @@ export interface CreateRegistrationInput {
   alternatePhoneNumber: string | null
   representativeName: string | null
   paymentStatus: PaymentStatus | null
+  team: Team | null
   /** Pass null to auto-generate a code from the event name. */
   code: string | null
 }
@@ -29,6 +31,7 @@ export interface UpdateRegistrationInput {
   alternatePhoneNumber: string | null
   representativeName: string | null
   paymentStatus: PaymentStatus | null
+  team: Team | null
 }
 
 export interface RegistrationSummary {
