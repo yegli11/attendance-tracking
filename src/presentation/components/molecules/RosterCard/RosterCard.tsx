@@ -8,10 +8,10 @@ import type { EventDay } from '@/domain/entities/EventDay'
 import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { Icon } from '@/presentation/components/atoms/Icon'
+import { TeamBadge } from '@/presentation/components/atoms/TeamBadge'
 import { useAuth } from '@/presentation/hooks/useAuth'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
 import { paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
-import { teamColor, teamLabel } from '@/shared/utils/teamLabel'
 import { REGISTRATION_DELETE_EMAIL } from '@/shared/constants/permissions'
 
 interface Props {
@@ -54,21 +54,12 @@ export function RosterCard({ entry, days, onEdit, onDelete }: Props) {
           <Typography sx={{ fontWeight: 700 }}>
             {entry.firstName} {entry.lastName}
           </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            {ageLabelForPerson(entry)}
-          </Typography>
-          {entry.team && (
-            <Chip
-              label={teamLabel(entry.team)}
-              size="small"
-              sx={{
-                mt: 0.5,
-                fontWeight: 700,
-                bgcolor: teamColor(entry.team).bg,
-                color: teamColor(entry.team).color,
-              }}
-            />
-          )}
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {ageLabelForPerson(entry)}
+            </Typography>
+            {entry.team && <TeamBadge team={entry.team} />}
+          </Stack>
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
           <Chip label={entry.code} size="small" color="primary" sx={{ fontWeight: 700 }} />
