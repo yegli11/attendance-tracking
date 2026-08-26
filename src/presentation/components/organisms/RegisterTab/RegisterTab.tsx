@@ -14,11 +14,13 @@ import Button from '@mui/material/Button'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import type { Gender } from '@/domain/entities/Gender'
 import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
+import type { Team } from '@/domain/entities/Team'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { registerPerson } from '@/application/useCases/registerPerson'
 import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
 import { BirthdateOrAgeField, type BirthInputMode } from '@/presentation/components/molecules/BirthdateOrAgeField'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
+import { teamLabel } from '@/shared/utils/teamLabel'
 import { useToast } from '@/presentation/hooks/useToast'
 
 interface Props {
@@ -30,6 +32,7 @@ interface Props {
 }
 
 type CodeMode = 'auto' | 'manual'
+const TEAMS: Team[] = ['naranja', 'rojo', 'verde', 'azul']
 
 export function RegisterTab({ eventId, genders, requiresRepresentative, requiresPaymentStatus, onRegistered }: Props) {
   const { showSuccess, showError } = useToast()
@@ -41,6 +44,7 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
   const [genderId, setGenderId] = useState<number | null>(null)
   const [representativeName, setRepresentativeName] = useState('')
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('pendiente')
+  const [team, setTeam] = useState<Team | ''>('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [alternatePhoneNumber, setAlternatePhoneNumber] = useState('')
   const [codeMode, setCodeMode] = useState<CodeMode>('auto')
@@ -58,6 +62,7 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
     setGenderId(null)
     setRepresentativeName('')
     setPaymentStatus('pendiente')
+    setTeam('')
     setPhoneNumber('')
     setAlternatePhoneNumber('')
     setCodeMode('auto')
@@ -82,6 +87,7 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
         requiresRepresentative,
         paymentStatus: requiresPaymentStatus ? paymentStatus : null,
         requiresPaymentStatus,
+        team: requiresRepresentative && team ? team : null,
         code: codeMode === 'manual' ? manualCode : null,
       })
       setLastTicket(entry)
@@ -161,6 +167,23 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
                 onChange={(e) => setRepresentativeName(e.target.value)}
                 fullWidth
               />
+            )}
+
+            {requiresRepresentative && (
+              <TextField
+                select
+                label="Equipo"
+                value={team}
+                onChange={(e) => setTeam(e.target.value as Team | '')}
+                fullWidth
+              >
+                <MenuItem value="">Sin asignar</MenuItem>
+                {TEAMS.map((value) => (
+                  <MenuItem key={value} value={value}>
+                    {teamLabel(value)}
+                  </MenuItem>
+                ))}
+              </TextField>
             )}
 
             {requiresPaymentStatus && (
@@ -260,6 +283,11 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
                 <Typography sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', mt: 0.5 }}>
                   {ageLabelForPerson(lastTicket)} · {lastTicket.genderName}
                 </Typography>
+                {lastTicket.team && (
+                  <Typography sx={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', mt: 0.25 }}>
+                    Equipo: {teamLabel(lastTicket.team)}
+                  </Typography>
+                )}
               </Box>
               <Stack
                 sx={{

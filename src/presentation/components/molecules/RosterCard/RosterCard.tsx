@@ -8,6 +8,7 @@ import type { EventDay } from '@/domain/entities/EventDay'
 import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { Icon } from '@/presentation/components/atoms/Icon'
+import { TeamBadge } from '@/presentation/components/atoms/TeamBadge'
 import { useAuth } from '@/presentation/hooks/useAuth'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
 import { paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
@@ -53,9 +54,12 @@ export function RosterCard({ entry, days, onEdit, onDelete }: Props) {
           <Typography sx={{ fontWeight: 700 }}>
             {entry.firstName} {entry.lastName}
           </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            {ageLabelForPerson(entry)}
-          </Typography>
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {ageLabelForPerson(entry)}
+            </Typography>
+            {entry.team && <TeamBadge team={entry.team} />}
+          </Stack>
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
           <Chip label={entry.code} size="small" color="primary" sx={{ fontWeight: 700 }} />

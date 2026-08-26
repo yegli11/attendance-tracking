@@ -1,6 +1,7 @@
 import type { RegistrationRepository } from '@/domain/repositories/RegistrationRepository'
 import type { DayAttendance, RosterEntry } from '@/domain/entities/RosterEntry'
 import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
+import type { Team } from '@/domain/entities/Team'
 import { supabase } from '@/infrastructure/supabase/client'
 import type { Database } from '@/infrastructure/supabase/types/database'
 
@@ -82,6 +83,7 @@ async function hydrate(registrations: RegistrationRow[]): Promise<RosterEntry[]>
       alternatePhoneNumber: contacts[1]?.phone_number ?? null,
       representativeName: representativeByRegistrationId.get(registration.id)?.full_name ?? null,
       paymentStatus: (registration.payment_status as PaymentStatus | null) ?? null,
+      team: (registration.team as Team | null) ?? null,
     })
   }
   return entries
@@ -174,7 +176,13 @@ export const supabaseRegistrationRepository: RegistrationRepository = {
     const { data: registration, error: registrationError } = await supabase
       .schema('event')
       .from('registration')
-      .insert({ person_id: person.id, event_id: input.eventId, code, payment_status: input.paymentStatus })
+      .insert({
+        person_id: person.id,
+        event_id: input.eventId,
+        code,
+        payment_status: input.paymentStatus,
+        team: input.team,
+      })
       .select()
       .single()
     if (registrationError) throw registrationError
@@ -286,7 +294,7 @@ export const supabaseRegistrationRepository: RegistrationRepository = {
     const { data: registration, error: registrationError } = await supabase
       .schema('event')
       .from('registration')
-      .update({ payment_status: input.paymentStatus })
+      .update({ payment_status: input.paymentStatus, team: input.team })
       .eq('id', input.registrationId)
       .select()
       .single()

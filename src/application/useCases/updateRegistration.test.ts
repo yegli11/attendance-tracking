@@ -23,6 +23,7 @@ function createRepository(): RegistrationRepository {
       alternatePhoneNumber: null,
       representativeName: 'Ana Pérez',
       paymentStatus: null,
+      team: null,
     }),
     findByCode: vi.fn(),
     setAttendance: vi.fn(),

@@ -4,6 +4,7 @@ import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
 import Chip from '@mui/material/Chip'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
+import { TeamBadge } from '@/presentation/components/atoms/TeamBadge'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
 
 interface Props {
@@ -33,9 +34,12 @@ export function AttendanceMatchCard({ entry, onSelect }: Props) {
           <Typography sx={{ fontWeight: 700, fontSize: '0.875rem' }}>
             {entry.firstName} {entry.lastName}
           </Typography>
-          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>
-            {ageLabelForPerson(entry)}
-          </Typography>
+          <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+              {ageLabelForPerson(entry)}
+            </Typography>
+            {entry.team && <TeamBadge team={entry.team} />}
+          </Stack>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             Representante: {entry.representativeName ?? 'sin registrar'}
           </Typography>
