@@ -15,22 +15,26 @@ import type { Category } from '@/domain/entities/Category'
 import type { Gender } from '@/domain/entities/Gender'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import type { TeamLeader } from '@/domain/entities/TeamLeader'
+import type { StaffMember } from '@/domain/entities/StaffMember'
 import { getEvent } from '@/application/useCases/getEvent'
 import { listCategories } from '@/application/useCases/listCategories'
 import { listRegistrationsForEvent } from '@/application/useCases/listRegistrationsForEvent'
 import { listGenders } from '@/application/useCases/listGenders'
 import { listTeamLeaders } from '@/application/useCases/listTeamLeaders'
+import { listStaffMembers } from '@/application/useCases/listStaffMembers'
 import { supabaseEventRepository } from '@/infrastructure/supabase/repositories/SupabaseEventRepository'
 import { supabaseCategoryRepository } from '@/infrastructure/supabase/repositories/SupabaseCategoryRepository'
 import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
 import { supabaseGenderRepository } from '@/infrastructure/supabase/repositories/SupabaseGenderRepository'
 import { supabaseTeamLeaderRepository } from '@/infrastructure/supabase/repositories/SupabaseTeamLeaderRepository'
+import { supabaseStaffMemberRepository } from '@/infrastructure/supabase/repositories/SupabaseStaffMemberRepository'
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { StatCard } from '@/presentation/components/molecules/StatCard'
 import { RosterTab } from '@/presentation/components/organisms/RosterTab'
 import { RegisterTab } from '@/presentation/components/organisms/RegisterTab'
 import { AttendanceTab } from '@/presentation/components/organisms/AttendanceTab'
 import { LeadersTab } from '@/presentation/components/organisms/LeadersTab'
+import { StaffTab } from '@/presentation/components/organisms/StaffTab'
 import { formatEventDateRange, formatEventDayLabel } from '@/shared/utils/formatEventDate'
 import { getCategoryColor } from '@/shared/utils/categoryColor'
 import { categoryRequiresRepresentative } from '@/shared/utils/categoryRequiresRepresentative'
@@ -39,7 +43,7 @@ import { exportAttendanceExcel } from '@/shared/utils/exportAttendanceExcel'
 import { useToast } from '@/presentation/hooks/useToast'
 
 type Status = 'loading' | 'ready' | 'error' | 'not-found'
-type TabKey = 'lista' | 'inscribir' | 'asistencia' | 'lideres'
+type TabKey = 'lista' | 'inscribir' | 'asistencia' | 'lideres' | 'equipo'
 type AttendanceFilter = 'all' | 'attended' | 'missing' | 'total'
 
 export function EventWorkspacePage() {
@@ -53,6 +57,7 @@ export function EventWorkspacePage() {
   const [roster, setRoster] = useState<RosterEntry[]>([])
   const [genders, setGenders] = useState<Gender[]>([])
   const [leaders, setLeaders] = useState<TeamLeader[]>([])
+  const [staffMembers, setStaffMembers] = useState<StaffMember[]>([])
   const [status, setStatus] = useState<Status>('loading')
   const [tab, setTab] = useState<TabKey>('lista')
   const [isExporting, setIsExporting] = useState(false)
@@ -75,13 +80,15 @@ export function EventWorkspacePage() {
         return
       }
       try {
-        const [eventResult, categoriesResult, rosterResult, gendersResult, leadersResult] = await Promise.all([
-          getEvent(supabaseEventRepository, id),
-          listCategories(supabaseCategoryRepository),
-          listRegistrationsForEvent(supabaseRegistrationRepository, id),
-          listGenders(supabaseGenderRepository),
-          listTeamLeaders(supabaseTeamLeaderRepository, id),
-        ])
+        const [eventResult, categoriesResult, rosterResult, gendersResult, leadersResult, staffMembersResult] =
+          await Promise.all([
+            getEvent(supabaseEventRepository, id),
+            listCategories(supabaseCategoryRepository),
+            listRegistrationsForEvent(supabaseRegistrationRepository, id),
+            listGenders(supabaseGenderRepository),
+            listTeamLeaders(supabaseTeamLeaderRepository, id),
+            listStaffMembers(supabaseStaffMemberRepository, id),
+          ])
         if (cancelled) return
         if (!eventResult) {
           setStatus('not-found')
@@ -92,6 +99,7 @@ export function EventWorkspacePage() {
         setRoster(rosterResult)
         setGenders(gendersResult)
         setLeaders(leadersResult)
+        setStaffMembers(staffMembersResult)
         const today = new Date().toDateString()
         const todayDay = eventResult.days.find((day) => new Date(day.eventDate).toDateString() === today)
         setSelectedDayId((todayDay ?? eventResult.days[0])?.id ?? null)
@@ -119,13 +127,16 @@ export function EventWorkspacePage() {
     const attendedLeaders = leaders.filter((leader) =>
       leader.attendance.some((day) => day.dayId === selectedDayId && day.attendedAt !== null),
     ).length
+    const attendedStaff = staffMembers.filter((member) =>
+      member.attendance.some((day) => day.dayId === selectedDayId && day.attendedAt !== null),
+    ).length
     return {
       registered,
       attended,
       pending: registered - attended,
-      totalAttendance: attended + attendedLeaders,
+      totalAttendance: attended + attendedLeaders + attendedStaff,
     }
-  }, [roster, leaders, selectedDayId])
+  }, [roster, leaders, staffMembers, selectedDayId])
 
   function handleRegistered(entry: RosterEntry) {
     setRoster((current) => [entry, ...current])
@@ -300,6 +311,7 @@ export function EventWorkspacePage() {
         <Tab value="inscribir" label="Inscribir" />
         <Tab value="asistencia" label="Control de asistencia" />
         <Tab value="lideres" label="Líderes" />
+        <Tab value="equipo" label="Equipo de trabajo" />
       </Tabs>
 
       {tab === 'lista' && selectedDayId !== null && (
@@ -339,6 +351,14 @@ export function EventWorkspacePage() {
           leaders={leaders}
           selectedDayId={selectedDayId}
           onLeadersChange={setLeaders}
+        />
+      )}
+      {tab === 'equipo' && selectedDayId !== null && (
+        <StaffTab
+          eventId={event.id}
+          staffMembers={staffMembers}
+          selectedDayId={selectedDayId}
+          onStaffMembersChange={setStaffMembers}
         />
       )}
     </Stack>

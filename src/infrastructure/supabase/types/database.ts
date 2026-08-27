@@ -176,6 +176,74 @@ export type Database = {
           },
         ]
       }
+      staff_member: {
+        Row: {
+          created_at: string
+          event_id: number
+          full_name: string
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          event_id: number
+          full_name: string
+          id?: never
+        }
+        Update: {
+          created_at?: string
+          event_id?: number
+          full_name?: string
+          id?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_member_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_member_attendance: {
+        Row: {
+          attended_at: string
+          created_at: string
+          day_id: number
+          id: number
+          staff_member_id: number
+        }
+        Insert: {
+          attended_at?: string
+          created_at?: string
+          day_id: number
+          id?: never
+          staff_member_id: number
+        }
+        Update: {
+          attended_at?: string
+          created_at?: string
+          day_id?: number
+          id?: never
+          staff_member_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_member_attendance_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "day"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_member_attendance_staff_member_id_fkey"
+            columns: ["staff_member_id"]
+            isOneToOne: false
+            referencedRelation: "staff_member"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_leader: {
         Row: {
           created_at: string
