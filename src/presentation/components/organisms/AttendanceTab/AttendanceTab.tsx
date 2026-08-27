@@ -210,6 +210,22 @@ export function AttendanceTab({ eventId, roster, selectedDayId, onAttendanceChan
                         <TeamBadge team={result.team} variant="onDark" />
                       </Box>
                     )}
+                    {result.attendance.length > 1 && (
+                      <Stack direction="row" spacing={0.5} sx={{ mt: 0.75, flexWrap: 'wrap' }} useFlexGap>
+                        {result.attendance.map((day) => (
+                          <Chip
+                            key={day.eventDayId}
+                            size="small"
+                            label={`D${day.dayNumber}`}
+                            sx={{
+                              fontWeight: 700,
+                              bgcolor: day.attendedAt !== null ? 'success.dark' : 'action.disabledBackground',
+                              color: day.attendedAt !== null ? 'common.white' : 'text.secondary',
+                            }}
+                          />
+                        ))}
+                      </Stack>
+                    )}
                   </Box>
                   <Stack
                     sx={{
