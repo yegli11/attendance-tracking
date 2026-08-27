@@ -72,6 +72,20 @@ export const supabaseTeamLeaderRepository: TeamLeaderRepository = {
     return entry
   },
 
+  async update(teamLeaderId, fullName) {
+    const { data, error } = await supabase
+      .schema('event')
+      .from('team_leader')
+      .update({ full_name: fullName })
+      .eq('id', teamLeaderId)
+      .select()
+      .single()
+    if (error) throw error
+    const [entry] = await hydrate([data])
+    if (!entry) throw new Error('No se pudo actualizar al líder.')
+    return entry
+  },
+
   async remove(teamLeaderId) {
     const { error } = await supabase.schema('event').from('team_leader').delete().eq('id', teamLeaderId)
     if (error) throw error

@@ -10,6 +10,7 @@ import Tooltip from '@mui/material/Tooltip'
 import type { Team } from '@/domain/entities/Team'
 import type { TeamLeader } from '@/domain/entities/TeamLeader'
 import { addTeamLeader } from '@/application/useCases/addTeamLeader'
+import { updateTeamLeader } from '@/application/useCases/updateTeamLeader'
 import { removeTeamLeader } from '@/application/useCases/removeTeamLeader'
 import { markLeaderAttendance } from '@/application/useCases/markLeaderAttendance'
 import { supabaseTeamLeaderRepository } from '@/infrastructure/supabase/repositories/SupabaseTeamLeaderRepository'
@@ -39,6 +40,8 @@ export function LeadersTab({ eventId, leaders, selectedDayId, onLeadersChange }:
     azul: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editingId, setEditingId] = useState<number | null>(null)
+  const [editValue, setEditValue] = useState('')
 
   async function handleAdd(event: FormEvent, team: Team) {
     event.preventDefault()
@@ -64,6 +67,32 @@ export function LeadersTab({ eventId, leaders, selectedDayId, onLeadersChange }:
       onLeadersChange(leaders.map((item) => (item.id === updated.id ? updated : item)))
     } catch {
       showError('No se pudo actualizar la asistencia del líder.')
+    }
+  }
+
+  function handleStartEdit(leader: TeamLeader) {
+    setEditingId(leader.id)
+    setEditValue(leader.fullName)
+  }
+
+  function handleCancelEdit() {
+    setEditingId(null)
+    setEditValue('')
+  }
+
+  async function handleSaveEdit(event: FormEvent, leader: TeamLeader) {
+    event.preventDefault()
+    const fullName = editValue.trim()
+    if (!fullName || fullName === leader.fullName) {
+      handleCancelEdit()
+      return
+    }
+    try {
+      const updated = await updateTeamLeader(supabaseTeamLeaderRepository, leader.id, fullName)
+      onLeadersChange(leaders.map((item) => (item.id === updated.id ? updated : item)))
+      handleCancelEdit()
+    } catch {
+      showError('No se pudo actualizar al líder.')
     }
   }
 
@@ -122,6 +151,38 @@ export function LeadersTab({ eventId, leaders, selectedDayId, onLeadersChange }:
                 <Stack spacing={0.5}>
                   {teamLeaders.map((leader) => {
                     const attended = attendedAtForDay(leader, selectedDayId) !== null
+
+                    if (editingId === leader.id) {
+                      return (
+                        <Stack
+                          key={leader.id}
+                          component="form"
+                          direction="row"
+                          spacing={0.5}
+                          sx={{ alignItems: 'center', py: 0.5, borderBottom: '1px solid', borderColor: 'divider' }}
+                          onSubmit={(e) => handleSaveEdit(e, leader)}
+                        >
+                          <TextField
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            size="small"
+                            fullWidth
+                            autoFocus
+                          />
+                          <Tooltip title="Guardar">
+                            <IconButton type="submit" size="small" color="success" aria-label="Guardar">
+                              <Icon name="check" size={14} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Cancelar">
+                            <IconButton size="small" onClick={handleCancelEdit} aria-label="Cancelar">
+                              <Icon name="close" size={14} />
+                            </IconButton>
+                          </Tooltip>
+                        </Stack>
+                      )
+                    }
+
                     return (
                       <Stack
                         key={leader.id}
@@ -146,6 +207,15 @@ export function LeadersTab({ eventId, leaders, selectedDayId, onLeadersChange }:
                               aria-label={attended ? 'Marcar ausente' : 'Marcar presente'}
                             >
                               <Icon name={attended ? 'undo' : 'check'} size={14} />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Editar nombre">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleStartEdit(leader)}
+                              aria-label="Editar nombre"
+                            >
+                              <Icon name="edit" size={14} />
                             </IconButton>
                           </Tooltip>
                           <Tooltip title="Eliminar líder">
