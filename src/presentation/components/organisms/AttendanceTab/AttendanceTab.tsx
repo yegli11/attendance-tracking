@@ -11,6 +11,7 @@ import Alert from '@mui/material/Alert'
 import Chip from '@mui/material/Chip'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import type { Team } from '@/domain/entities/Team'
+import type { TeamLeader } from '@/domain/entities/TeamLeader'
 import { findRegistrationByCode } from '@/application/useCases/findRegistrationByCode'
 import { markAttendance } from '@/application/useCases/markAttendance'
 import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
@@ -26,6 +27,7 @@ const TEAMS: Team[] = ['naranja', 'rojo', 'verde', 'azul']
 interface Props {
   eventId: number
   roster: RosterEntry[]
+  leaders: TeamLeader[]
   selectedDayId: number
   onAttendanceChange: (entry: RosterEntry) => void
 }
@@ -38,7 +40,7 @@ function attendedAtForDay(entry: RosterEntry, eventDayId: number): string | null
   return entry.attendance.find((day) => day.eventDayId === eventDayId)?.attendedAt ?? null
 }
 
-export function AttendanceTab({ eventId, roster, selectedDayId, onAttendanceChange }: Props) {
+export function AttendanceTab({ eventId, roster, leaders, selectedDayId, onAttendanceChange }: Props) {
   const { showSuccess, showError } = useToast()
   const [code, setCode] = useState('')
   const [result, setResult] = useState<RosterEntry | null | undefined>(undefined)
@@ -107,8 +109,12 @@ export function AttendanceTab({ eventId, roster, selectedDayId, onAttendanceChan
   const teamStats = TEAMS.map((team) => {
     const inTeam = roster.filter((entry) => entry.team === team)
     const present = inTeam.filter((entry) => attendedAtForDay(entry, selectedDayId) !== null).length
-    return { team, total: inTeam.length, present }
-  }).filter((stat) => stat.total > 0)
+    const teamLeaders = leaders.filter((leader) => leader.team === team)
+    const presentLeaders = teamLeaders.filter((leader) =>
+      leader.attendance.some((day) => day.dayId === selectedDayId && day.attendedAt !== null),
+    ).length
+    return { team, total: inTeam.length, present, totalLeaders: teamLeaders.length, presentLeaders }
+  }).filter((stat) => stat.total > 0 || stat.totalLeaders > 0)
 
   return (
     <Stack spacing={3}>
@@ -116,7 +122,13 @@ export function AttendanceTab({ eventId, roster, selectedDayId, onAttendanceChan
         <Grid container spacing={1.5}>
           {teamStats.map((stat) => (
             <Grid key={stat.team} size={{ xs: 6, sm: 3 }}>
-              <TeamStatCard team={stat.team} present={stat.present} total={stat.total} />
+              <TeamStatCard
+                team={stat.team}
+                present={stat.present}
+                total={stat.total}
+                presentLeaders={stat.presentLeaders}
+                totalLeaders={stat.totalLeaders}
+              />
             </Grid>
           ))}
         </Grid>
@@ -209,6 +221,22 @@ export function AttendanceTab({ eventId, roster, selectedDayId, onAttendanceChan
                       <Box sx={{ mt: 0.75 }}>
                         <TeamBadge team={result.team} variant="onDark" />
                       </Box>
+                    )}
+                    {result.attendance.length > 1 && (
+                      <Stack direction="row" spacing={0.5} sx={{ mt: 0.75, flexWrap: 'wrap' }} useFlexGap>
+                        {result.attendance.map((day) => (
+                          <Chip
+                            key={day.eventDayId}
+                            size="small"
+                            label={`D${day.dayNumber}`}
+                            sx={{
+                              fontWeight: 700,
+                              bgcolor: day.attendedAt !== null ? 'success.dark' : 'action.disabledBackground',
+                              color: day.attendedAt !== null ? 'common.white' : 'text.secondary',
+                            }}
+                          />
+                        ))}
+                      </Stack>
                     )}
                   </Box>
                   <Stack

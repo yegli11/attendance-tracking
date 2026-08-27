@@ -8,9 +8,11 @@ interface Props {
   team: Team
   present: number
   total: number
+  presentLeaders?: number
+  totalLeaders?: number
 }
 
-export function TeamStatCard({ team, present, total }: Props) {
+export function TeamStatCard({ team, present, total, presentLeaders, totalLeaders }: Props) {
   return (
     <Card variant="outlined" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 2, height: '100%' }}>
       <Box
@@ -42,6 +44,11 @@ export function TeamStatCard({ team, present, total }: Props) {
         <Typography sx={{ fontSize: '21px', fontWeight: 800, lineHeight: 1.2 }}>
           {present}/{total}
         </Typography>
+        {totalLeaders !== undefined && totalLeaders > 0 && (
+          <Typography sx={{ fontSize: '11px', color: 'text.secondary' }}>
+            Líderes: {presentLeaders}/{totalLeaders}
+          </Typography>
+        )}
       </Box>
     </Card>
   )

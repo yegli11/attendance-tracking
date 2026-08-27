@@ -14,20 +14,23 @@ import type { Event } from '@/domain/entities/Event'
 import type { Category } from '@/domain/entities/Category'
 import type { Gender } from '@/domain/entities/Gender'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
+import type { TeamLeader } from '@/domain/entities/TeamLeader'
 import { getEvent } from '@/application/useCases/getEvent'
 import { listCategories } from '@/application/useCases/listCategories'
 import { listRegistrationsForEvent } from '@/application/useCases/listRegistrationsForEvent'
 import { listGenders } from '@/application/useCases/listGenders'
+import { listTeamLeaders } from '@/application/useCases/listTeamLeaders'
 import { supabaseEventRepository } from '@/infrastructure/supabase/repositories/SupabaseEventRepository'
 import { supabaseCategoryRepository } from '@/infrastructure/supabase/repositories/SupabaseCategoryRepository'
 import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
 import { supabaseGenderRepository } from '@/infrastructure/supabase/repositories/SupabaseGenderRepository'
+import { supabaseTeamLeaderRepository } from '@/infrastructure/supabase/repositories/SupabaseTeamLeaderRepository'
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { StatCard } from '@/presentation/components/molecules/StatCard'
-import { AttendanceRing } from '@/presentation/components/molecules/AttendanceRing'
 import { RosterTab } from '@/presentation/components/organisms/RosterTab'
 import { RegisterTab } from '@/presentation/components/organisms/RegisterTab'
 import { AttendanceTab } from '@/presentation/components/organisms/AttendanceTab'
+import { LeadersTab } from '@/presentation/components/organisms/LeadersTab'
 import { formatEventDateRange, formatEventDayLabel } from '@/shared/utils/formatEventDate'
 import { getCategoryColor } from '@/shared/utils/categoryColor'
 import { categoryRequiresRepresentative } from '@/shared/utils/categoryRequiresRepresentative'
@@ -36,7 +39,8 @@ import { exportAttendanceExcel } from '@/shared/utils/exportAttendanceExcel'
 import { useToast } from '@/presentation/hooks/useToast'
 
 type Status = 'loading' | 'ready' | 'error' | 'not-found'
-type TabKey = 'lista' | 'inscribir' | 'asistencia'
+type TabKey = 'lista' | 'inscribir' | 'asistencia' | 'lideres'
+type AttendanceFilter = 'all' | 'attended' | 'missing' | 'total'
 
 export function EventWorkspacePage() {
   const { eventId } = useParams<{ eventId: string }>()
@@ -48,11 +52,18 @@ export function EventWorkspacePage() {
   const [categories, setCategories] = useState<Category[]>([])
   const [roster, setRoster] = useState<RosterEntry[]>([])
   const [genders, setGenders] = useState<Gender[]>([])
+  const [leaders, setLeaders] = useState<TeamLeader[]>([])
   const [status, setStatus] = useState<Status>('loading')
   const [tab, setTab] = useState<TabKey>('lista')
   const [isExporting, setIsExporting] = useState(false)
   const [selectedDayId, setSelectedDayId] = useState<number | null>(null)
   const [retryToken, setRetryToken] = useState(0)
+  const [attendanceFilter, setAttendanceFilter] = useState<AttendanceFilter>('all')
+
+  function handleFilterCardClick(filter: AttendanceFilter) {
+    setAttendanceFilter(filter)
+    setTab('lista')
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -64,11 +75,12 @@ export function EventWorkspacePage() {
         return
       }
       try {
-        const [eventResult, categoriesResult, rosterResult, gendersResult] = await Promise.all([
+        const [eventResult, categoriesResult, rosterResult, gendersResult, leadersResult] = await Promise.all([
           getEvent(supabaseEventRepository, id),
           listCategories(supabaseCategoryRepository),
           listRegistrationsForEvent(supabaseRegistrationRepository, id),
           listGenders(supabaseGenderRepository),
+          listTeamLeaders(supabaseTeamLeaderRepository, id),
         ])
         if (cancelled) return
         if (!eventResult) {
@@ -79,6 +91,7 @@ export function EventWorkspacePage() {
         setCategories(categoriesResult)
         setRoster(rosterResult)
         setGenders(gendersResult)
+        setLeaders(leadersResult)
         const today = new Date().toDateString()
         const todayDay = eventResult.days.find((day) => new Date(day.eventDate).toDateString() === today)
         setSelectedDayId((todayDay ?? eventResult.days[0])?.id ?? null)
@@ -103,13 +116,16 @@ export function EventWorkspacePage() {
     const attended = roster.filter((entry) =>
       entry.attendance.some((day) => day.eventDayId === selectedDayId && day.attendedAt !== null),
     ).length
+    const attendedLeaders = leaders.filter((leader) =>
+      leader.attendance.some((day) => day.dayId === selectedDayId && day.attendedAt !== null),
+    ).length
     return {
       registered,
       attended,
       pending: registered - attended,
-      percentage: registered ? Math.round((attended / registered) * 100) : 0,
+      totalAttendance: attended + attendedLeaders,
     }
-  }, [roster, selectedDayId])
+  }, [roster, leaders, selectedDayId])
 
   function handleRegistered(entry: RosterEntry) {
     setRoster((current) => [entry, ...current])
@@ -237,38 +253,40 @@ export function EventWorkspacePage() {
 
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard icon="users" label="Inscritos" value={stats.registered} />
+          <StatCard
+            icon="users"
+            label="Inscritos"
+            value={stats.registered}
+            active={attendanceFilter === 'all'}
+            onClick={() => handleFilterCardClick('all')}
+          />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard icon="check" label="Asistieron" value={stats.attended} />
+          <StatCard
+            icon="check"
+            label="Asistieron"
+            value={stats.attended}
+            active={attendanceFilter === 'attended'}
+            onClick={() => handleFilterCardClick('attended')}
+          />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <StatCard icon="clock" label="Faltan" value={stats.pending} />
+          <StatCard
+            icon="clock"
+            label="Faltan"
+            value={stats.pending}
+            active={attendanceFilter === 'missing'}
+            onClick={() => handleFilterCardClick('missing')}
+          />
         </Grid>
         <Grid size={{ xs: 6, md: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1.5,
-              p: 2,
-              height: '100%',
-              bgcolor: 'background.paper',
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 1.5,
-            }}
-          >
-            <AttendanceRing percentage={stats.percentage} size={42} />
-            <Box>
-              <Typography
-                sx={{ fontSize: '11px', fontWeight: 700, color: 'text.secondary', textTransform: 'uppercase' }}
-              >
-                Asistencia
-              </Typography>
-              <Typography sx={{ fontSize: '11px', color: 'text.secondary' }}>en tiempo real</Typography>
-            </Box>
-          </Box>
+          <StatCard
+            icon="flame"
+            label="Asistencia total"
+            value={stats.totalAttendance}
+            active={attendanceFilter === 'total'}
+            onClick={() => handleFilterCardClick('total')}
+          />
         </Grid>
       </Grid>
 
@@ -281,12 +299,15 @@ export function EventWorkspacePage() {
         <Tab value="lista" label="Lista de inscritos" />
         <Tab value="inscribir" label="Inscribir" />
         <Tab value="asistencia" label="Control de asistencia" />
+        <Tab value="lideres" label="Líderes" />
       </Tabs>
 
-      {tab === 'lista' && (
+      {tab === 'lista' && selectedDayId !== null && (
         <RosterTab
           roster={roster}
           days={event.days}
+          selectedDayId={selectedDayId}
+          attendanceFilter={attendanceFilter}
           genders={genders}
           requiresRepresentative={requiresRepresentative}
           requiresPaymentStatus={requiresPaymentStatus}
@@ -307,8 +328,17 @@ export function EventWorkspacePage() {
         <AttendanceTab
           eventId={event.id}
           roster={roster}
+          leaders={leaders}
           selectedDayId={selectedDayId}
           onAttendanceChange={handleRosterEntryChange}
+        />
+      )}
+      {tab === 'lideres' && selectedDayId !== null && (
+        <LeadersTab
+          eventId={event.id}
+          leaders={leaders}
+          selectedDayId={selectedDayId}
+          onLeadersChange={setLeaders}
         />
       )}
     </Stack>
