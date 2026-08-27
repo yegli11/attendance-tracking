@@ -22,9 +22,13 @@ function codeGroup(code: string): string {
   return dashIndex > 0 ? code.slice(0, dashIndex) : code
 }
 
+export type RosterAttendanceFilter = 'all' | 'attended' | 'missing' | 'total'
+
 interface Props {
   roster: RosterEntry[]
   days: EventDay[]
+  selectedDayId: number
+  attendanceFilter: RosterAttendanceFilter
   genders: Gender[]
   requiresRepresentative: boolean
   requiresPaymentStatus: boolean
@@ -35,6 +39,8 @@ interface Props {
 export function RosterTab({
   roster,
   days,
+  selectedDayId,
+  attendanceFilter,
   genders,
   requiresRepresentative,
   requiresPaymentStatus,
@@ -56,9 +62,12 @@ export function RosterTab({
     return roster.filter((entry) => {
       if (letterFilter !== 'all' && codeGroup(entry.code) !== letterFilter) return false
       if (query && !`${entry.firstName} ${entry.lastName} ${entry.code}`.toLowerCase().includes(query)) return false
+      const attendedToday = entry.attendance.some((day) => day.eventDayId === selectedDayId && day.attendedAt !== null)
+      if ((attendanceFilter === 'attended' || attendanceFilter === 'total') && !attendedToday) return false
+      if (attendanceFilter === 'missing' && attendedToday) return false
       return true
     })
-  }, [roster, search, letterFilter])
+  }, [roster, search, letterFilter, attendanceFilter, selectedDayId])
 
   async function handleDelete(entry: RosterEntry) {
     try {
