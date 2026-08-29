@@ -24,6 +24,7 @@ function createRepository(): RegistrationRepository {
       representativeName: 'Ana Pérez',
       paymentStatus: null,
       team: null,
+      isOnline: false,
     }),
     findByCode: vi.fn(),
     setAttendance: vi.fn(),
@@ -43,6 +44,7 @@ const baseInput = {
   alternatePhoneNumber: null,
   paymentStatus: null,
   requiresPaymentStatus: false,
+  isOnline: false,
 }
 
 describe('updateRegistration', () => {

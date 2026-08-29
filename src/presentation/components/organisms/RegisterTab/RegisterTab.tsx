@@ -9,6 +9,8 @@ import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
 import ToggleButton from '@mui/material/ToggleButton'
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup'
+import Checkbox from '@mui/material/Checkbox'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import { DatePicker } from '@mui/x-date-pickers/DatePicker'
@@ -45,6 +47,7 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
   const [representativeName, setRepresentativeName] = useState('')
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>('pendiente')
   const [team, setTeam] = useState<Team | ''>('')
+  const [isOnline, setIsOnline] = useState(false)
   const [phoneNumber, setPhoneNumber] = useState('')
   const [alternatePhoneNumber, setAlternatePhoneNumber] = useState('')
   const [codeMode, setCodeMode] = useState<CodeMode>('auto')
@@ -63,6 +66,7 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
     setRepresentativeName('')
     setPaymentStatus('pendiente')
     setTeam('')
+    setIsOnline(false)
     setPhoneNumber('')
     setAlternatePhoneNumber('')
     setCodeMode('auto')
@@ -88,6 +92,7 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
         paymentStatus: requiresPaymentStatus ? paymentStatus : null,
         requiresPaymentStatus,
         team: requiresRepresentative && team ? team : null,
+        isOnline,
         code: codeMode === 'manual' ? manualCode : null,
       })
       setLastTicket(entry)
@@ -214,6 +219,12 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
                 fullWidth
               />
             </Stack>
+
+            <FormControlLabel
+              control={<Checkbox checked={isOnline} onChange={(e) => setIsOnline(e.target.checked)} />}
+              label="Se inscribió por el formulario online"
+              sx={{ alignSelf: 'flex-start' }}
+            />
 
             <Box>
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>

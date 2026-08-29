@@ -7,6 +7,7 @@ import Grid from '@mui/material/Grid'
 import Typography from '@mui/material/Typography'
 import type { Gender } from '@/domain/entities/Gender'
 import type { EventDay } from '@/domain/entities/EventDay'
+import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { deleteRegistration } from '@/application/useCases/deleteRegistration'
 import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
@@ -14,6 +15,7 @@ import { Icon } from '@/presentation/components/atoms/Icon'
 import { RosterCard } from '@/presentation/components/molecules/RosterCard'
 import { Modal } from '@/presentation/components/organisms/Modal'
 import { EditRegistrationForm } from '@/presentation/components/organisms/EditRegistrationForm'
+import { paymentStatusColor, paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
 import { useToast } from '@/presentation/hooks/useToast'
 
 /** Codes are generated as "A-01", "B-02"... — the letter identifies which sign-up sheet ("planilla") a person came from. */
@@ -22,6 +24,7 @@ function codeGroup(code: string): string {
   return dashIndex > 0 ? code.slice(0, dashIndex) : code
 }
 
+const PAYMENT_STATUSES: PaymentStatus[] = ['pagado', 'financiado', 'pendiente']
 export type RosterAttendanceFilter = 'all' | 'attended' | 'missing' | 'total'
 
 interface Props {
@@ -50,6 +53,7 @@ export function RosterTab({
   const { showSuccess, showError } = useToast()
   const [search, setSearch] = useState('')
   const [letterFilter, setLetterFilter] = useState<string | 'all'>('all')
+  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | 'all'>('all')
   const [editingEntry, setEditingEntry] = useState<RosterEntry | null>(null)
 
   const availableLetters = useMemo(
@@ -61,13 +65,22 @@ export function RosterTab({
     const query = search.trim().toLowerCase()
     return roster.filter((entry) => {
       if (letterFilter !== 'all' && codeGroup(entry.code) !== letterFilter) return false
+      if (paymentFilter !== 'all' && entry.paymentStatus !== paymentFilter) return false
       if (query && !`${entry.firstName} ${entry.lastName} ${entry.code}`.toLowerCase().includes(query)) return false
       const attendedToday = entry.attendance.some((day) => day.eventDayId === selectedDayId && day.attendedAt !== null)
       if ((attendanceFilter === 'attended' || attendanceFilter === 'total') && !attendedToday) return false
       if (attendanceFilter === 'missing' && attendedToday) return false
       return true
     })
-  }, [roster, search, letterFilter, attendanceFilter, selectedDayId])
+  }, [roster, search, letterFilter, paymentFilter, attendanceFilter, selectedDayId])
+
+  const paymentCounts = useMemo(() => {
+    const counts: Record<PaymentStatus, number> = { pagado: 0, financiado: 0, pendiente: 0 }
+    for (const entry of roster) {
+      if (entry.paymentStatus) counts[entry.paymentStatus]++
+    }
+    return counts
+  }, [roster])
 
   async function handleDelete(entry: RosterEntry) {
     try {
@@ -130,6 +143,36 @@ export function RosterTab({
           </Stack>
         )}
       </Stack>
+
+      {requiresPaymentStatus && (
+        <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
+          <Chip
+            label={`Todos (${roster.length})`}
+            size="small"
+            onClick={() => setPaymentFilter('all')}
+            sx={
+              paymentFilter === 'all'
+                ? { bgcolor: 'text.primary', color: 'common.white', fontWeight: 700 }
+                : { fontWeight: 700 }
+            }
+            variant={paymentFilter === 'all' ? 'filled' : 'outlined'}
+          />
+          {PAYMENT_STATUSES.map((status) => (
+            <Chip
+              key={status}
+              label={`${paymentStatusLabel(status)} (${paymentCounts[status]})`}
+              size="small"
+              onClick={() => setPaymentFilter(status)}
+              sx={
+                paymentFilter === status
+                  ? { bgcolor: paymentStatusColor(status).bg, color: paymentStatusColor(status).color, fontWeight: 700 }
+                  : { borderColor: paymentStatusColor(status).bg, color: paymentStatusColor(status).bg, fontWeight: 700 }
+              }
+              variant={paymentFilter === status ? 'filled' : 'outlined'}
+            />
+          ))}
+        </Stack>
+      )}
 
       {roster.length === 0 ? (
         <Typography sx={{ color: 'text.secondary', py: 4, textAlign: 'center' }}>

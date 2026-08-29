@@ -5,6 +5,8 @@ import Stack from '@mui/material/Stack'
 import Box from '@mui/material/Box'
 import TextField from '@mui/material/TextField'
 import MenuItem from '@mui/material/MenuItem'
+import Checkbox from '@mui/material/Checkbox'
+import FormControlLabel from '@mui/material/FormControlLabel'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import DialogActions from '@mui/material/DialogActions'
@@ -50,6 +52,7 @@ export function EditRegistrationForm({
   const [representativeName, setRepresentativeName] = useState(entry.representativeName ?? '')
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(entry.paymentStatus ?? 'pendiente')
   const [team, setTeam] = useState<Team | ''>(entry.team ?? '')
+  const [isOnline, setIsOnline] = useState(entry.isOnline)
   const [phoneNumber, setPhoneNumber] = useState(entry.phoneNumber)
   const [alternatePhoneNumber, setAlternatePhoneNumber] = useState(entry.alternatePhoneNumber ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -75,6 +78,7 @@ export function EditRegistrationForm({
         paymentStatus: requiresPaymentStatus ? paymentStatus : null,
         requiresPaymentStatus,
         team: requiresRepresentative && team ? team : null,
+        isOnline,
       })
       onUpdated(updated)
       showSuccess('Inscripción actualizada correctamente.')
@@ -179,6 +183,12 @@ export function EditRegistrationForm({
           fullWidth
         />
       </Stack>
+
+      <FormControlLabel
+        control={<Checkbox checked={isOnline} onChange={(e) => setIsOnline(e.target.checked)} />}
+        label="Se inscribió por el formulario online"
+        sx={{ alignSelf: 'flex-start' }}
+      />
 
       {error && <Alert severity="error">{error}</Alert>}
 

@@ -84,6 +84,7 @@ async function hydrate(registrations: RegistrationRow[]): Promise<RosterEntry[]>
       representativeName: representativeByRegistrationId.get(registration.id)?.full_name ?? null,
       paymentStatus: (registration.payment_status as PaymentStatus | null) ?? null,
       team: (registration.team as Team | null) ?? null,
+      isOnline: registration.is_online,
     })
   }
   return entries
@@ -182,6 +183,7 @@ export const supabaseRegistrationRepository: RegistrationRepository = {
         code,
         payment_status: input.paymentStatus,
         team: input.team,
+        is_online: input.isOnline,
       })
       .select()
       .single()
@@ -294,7 +296,7 @@ export const supabaseRegistrationRepository: RegistrationRepository = {
     const { data: registration, error: registrationError } = await supabase
       .schema('event')
       .from('registration')
-      .update({ payment_status: input.paymentStatus, team: input.team })
+      .update({ payment_status: input.paymentStatus, team: input.team, is_online: input.isOnline })
       .eq('id', input.registrationId)
       .select()
       .single()

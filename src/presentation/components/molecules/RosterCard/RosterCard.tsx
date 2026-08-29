@@ -5,13 +5,14 @@ import Chip from '@mui/material/Chip'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
 import type { EventDay } from '@/domain/entities/EventDay'
-import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { TeamBadge } from '@/presentation/components/atoms/TeamBadge'
 import { useAuth } from '@/presentation/hooks/useAuth'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
-import { paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
+import { findBirthdayEventDay } from '@/shared/utils/findBirthdayEventDay'
+import { formatEventDayLabel } from '@/shared/utils/formatEventDate'
+import { paymentStatusColor, paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
 import { REGISTRATION_DELETE_EMAIL } from '@/shared/constants/permissions'
 
 interface Props {
@@ -21,17 +22,12 @@ interface Props {
   onDelete: () => void
 }
 
-const PAYMENT_STATUS_COLOR: Record<PaymentStatus, { bg: string; color: string }> = {
-  pagado: { bg: 'success.main', color: 'common.white' },
-  financiado: { bg: 'info.main', color: 'common.white' },
-  pendiente: { bg: 'warning.main', color: 'common.white' },
-}
-
 export function RosterCard({ entry, days, onEdit, onDelete }: Props) {
   const { user } = useAuth()
   const canDelete = user?.email === REGISTRATION_DELETE_EMAIL
   const isMultiDay = days.length > 1
   const attendedAnyDay = entry.attendance.some((day) => day.attendedAt !== null)
+  const birthdayDay = findBirthdayEventDay(entry.birthdate, days)
 
   function handleDelete() {
     const confirmed = window.confirm(`¿Eliminar a ${entry.firstName} ${entry.lastName} de este evento?`)
@@ -51,9 +47,18 @@ export function RosterCard({ entry, days, onEdit, onDelete }: Props) {
     >
       <Stack direction="row" sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
         <Box>
-          <Typography sx={{ fontWeight: 700 }}>
-            {entry.firstName} {entry.lastName}
-          </Typography>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+            <Typography sx={{ fontWeight: 700 }}>
+              {entry.firstName} {entry.lastName}
+            </Typography>
+            {birthdayDay && (
+              <Tooltip title={`Cumpleaños: ${formatEventDayLabel(birthdayDay)}`}>
+                <span aria-label="Cumpleaños durante el evento" style={{ fontSize: '0.9rem', lineHeight: 1 }}>
+                  🎂
+                </span>
+              </Tooltip>
+            )}
+          </Stack>
           <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
             <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               {ageLabelForPerson(entry)}
@@ -62,6 +67,16 @@ export function RosterCard({ entry, days, onEdit, onDelete }: Props) {
           </Stack>
         </Box>
         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
+          {entry.isOnline && (
+            <Tooltip title="Inscripción hecha por el formulario online">
+              <Chip
+                label="Online"
+                size="small"
+                variant="outlined"
+                sx={{ height: 20, fontSize: '0.6875rem', fontWeight: 600, color: 'text.secondary' }}
+              />
+            </Tooltip>
+          )}
           <Chip label={entry.code} size="small" color="primary" sx={{ fontWeight: 700 }} />
           <Tooltip title="Editar inscripción">
             <IconButton size="small" onClick={onEdit} aria-label="Editar inscripción">
@@ -92,8 +107,8 @@ export function RosterCard({ entry, days, onEdit, onDelete }: Props) {
             fontSize: '0.75rem',
             textTransform: 'uppercase',
             letterSpacing: '0.02em',
-            bgcolor: PAYMENT_STATUS_COLOR[entry.paymentStatus].bg,
-            color: PAYMENT_STATUS_COLOR[entry.paymentStatus].color,
+            bgcolor: paymentStatusColor(entry.paymentStatus).bg,
+            color: paymentStatusColor(entry.paymentStatus).color,
           }}
         >
           {entry.paymentStatus === 'pagado' && <Icon name="check" size={11} />}
