@@ -1,17 +1,49 @@
 import Card from '@mui/material/Card'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import { alpha } from '@mui/material/styles'
 import { Icon, type IconName } from '@/presentation/components/atoms/Icon'
 
 interface Props {
   icon: IconName
   label: string
   value: string | number
+  active?: boolean
+  onClick?: () => void
 }
 
-export function StatCard({ icon, label, value }: Props) {
+export function StatCard({ icon, label, value, active = false, onClick }: Props) {
   return (
-    <Card variant="outlined" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 2, height: '100%' }}>
+    <Card
+      variant="outlined"
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={
+        onClick
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onClick()
+              }
+            }
+          : undefined
+      }
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        p: 2,
+        height: '100%',
+        borderColor: active ? 'primary.main' : 'divider',
+        borderWidth: active ? 2 : 1,
+        bgcolor: active ? alpha('#060773', 0.05) : 'background.paper',
+        ...(onClick && {
+          cursor: 'pointer',
+          '&:hover': { borderColor: 'primary.main' },
+        }),
+      }}
+    >
       <Box
         sx={{
           width: 38,

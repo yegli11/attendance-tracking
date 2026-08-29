@@ -10,10 +10,49 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
+    PostgrestVersion: "14.17"
   }
   event: {
     Tables: {
+      attendance: {
+        Row: {
+          attended_at: string
+          created_at: string
+          day_id: number
+          id: number
+          registration_id: number
+        }
+        Insert: {
+          attended_at?: string
+          created_at?: string
+          day_id: number
+          id?: never
+          registration_id: number
+        }
+        Update: {
+          attended_at?: string
+          created_at?: string
+          day_id?: number
+          id?: never
+          registration_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_event_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "day"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attendance_registration_id_fkey"
+            columns: ["registration_id"]
+            isOneToOne: false
+            referencedRelation: "registration"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       category: {
         Row: {
           created_at: string
@@ -31,6 +70,38 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      day: {
+        Row: {
+          created_at: string
+          day_number: number
+          event_date: string
+          event_id: number
+          id: number
+        }
+        Insert: {
+          created_at?: string
+          day_number: number
+          event_date: string
+          event_id: number
+          id?: number
+        }
+        Update: {
+          created_at?: string
+          day_number?: number
+          event_date?: string
+          event_id?: number
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_day_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       event: {
         Row: {
@@ -108,31 +179,28 @@ export type Database = {
           },
         ]
       }
-      day: {
+      staff_member: {
         Row: {
           created_at: string
-          day_number: number
-          event_date: string
           event_id: number
+          full_name: string
           id: number
         }
         Insert: {
           created_at?: string
-          day_number: number
-          event_date: string
           event_id: number
+          full_name: string
           id?: never
         }
         Update: {
           created_at?: string
-          day_number?: number
-          event_date?: string
           event_id?: number
+          full_name?: string
           id?: never
         }
         Relationships: [
           {
-            foreignKeyName: "event_day_event_id_fkey"
+            foreignKeyName: "staff_member_event_id_fkey"
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "event"
@@ -140,41 +208,112 @@ export type Database = {
           },
         ]
       }
-      attendance: {
+      staff_member_attendance: {
         Row: {
           attended_at: string
           created_at: string
           day_id: number
           id: number
-          registration_id: number
+          staff_member_id: number
         }
         Insert: {
           attended_at?: string
           created_at?: string
           day_id: number
           id?: never
-          registration_id: number
+          staff_member_id: number
         }
         Update: {
           attended_at?: string
           created_at?: string
           day_id?: number
           id?: never
-          registration_id?: number
+          staff_member_id?: number
         }
         Relationships: [
           {
-            foreignKeyName: "attendance_event_day_id_fkey"
+            foreignKeyName: "staff_member_attendance_day_id_fkey"
             columns: ["day_id"]
             isOneToOne: false
             referencedRelation: "day"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "attendance_registration_id_fkey"
-            columns: ["registration_id"]
+            foreignKeyName: "staff_member_attendance_staff_member_id_fkey"
+            columns: ["staff_member_id"]
             isOneToOne: false
-            referencedRelation: "registration"
+            referencedRelation: "staff_member"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_leader: {
+        Row: {
+          created_at: string
+          event_id: number
+          full_name: string
+          id: number
+          team: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: number
+          full_name: string
+          id?: never
+          team: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: number
+          full_name?: string
+          id?: never
+          team?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_leader_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "event"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_leader_attendance: {
+        Row: {
+          attended_at: string
+          created_at: string
+          day_id: number
+          id: number
+          team_leader_id: number
+        }
+        Insert: {
+          attended_at?: string
+          created_at?: string
+          day_id: number
+          id?: never
+          team_leader_id: number
+        }
+        Update: {
+          attended_at?: string
+          created_at?: string
+          day_id?: number
+          id?: never
+          team_leader_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_leader_attendance_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "day"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_leader_attendance_team_leader_id_fkey"
+            columns: ["team_leader_id"]
+            isOneToOne: false
+            referencedRelation: "team_leader"
             referencedColumns: ["id"]
           },
         ]

@@ -25,10 +25,13 @@ function codeGroup(code: string): string {
 }
 
 const PAYMENT_STATUSES: PaymentStatus[] = ['pagado', 'financiado', 'pendiente']
+export type Rosthttps://github.com/yegli11/attendance-tracking/pull/27/conflict?name=src%252Fpresentation%252Fcomponents%252Fpages%252FEventWorkspacePage%252FEventWorkspacePage.tsx&ancestor_oid=2abc6a45b317d7a8b38d1e4acefd26e1a44b147b&base_oid=cac4dd46401c925d2a56a36631723b5fa0d2ec99&head_oid=fb3378974edd5fa3a38d9730778158d1b72f5637erAttendanceFilter = 'all' | 'attended' | 'missing' | 'total'
 
 interface Props {
   roster: RosterEntry[]
   days: EventDay[]
+  selectedDayId: number
+  attendanceFilter: RosterAttendanceFilter
   genders: Gender[]
   requiresRepresentative: boolean
   requiresPaymentStatus: boolean
@@ -39,6 +42,8 @@ interface Props {
 export function RosterTab({
   roster,
   days,
+  selectedDayId,
+  attendanceFilter,
   genders,
   requiresRepresentative,
   requiresPaymentStatus,
@@ -62,17 +67,12 @@ export function RosterTab({
       if (letterFilter !== 'all' && codeGroup(entry.code) !== letterFilter) return false
       if (paymentFilter !== 'all' && entry.paymentStatus !== paymentFilter) return false
       if (query && !`${entry.firstName} ${entry.lastName} ${entry.code}`.toLowerCase().includes(query)) return false
+      const attendedToday = entry.attendance.some((day) => day.eventDayId === selectedDayId && day.attendedAt !== null)
+      if ((attendanceFilter === 'attended' || attendanceFilter === 'total') && !attendedToday) return false
+      if (attendanceFilter === 'missing' && attendedToday) return false
       return true
     })
-  }, [roster, search, letterFilter, paymentFilter])
-
-  const paymentCounts = useMemo(() => {
-    const counts: Record<PaymentStatus, number> = { pagado: 0, financiado: 0, pendiente: 0 }
-    for (const entry of roster) {
-      if (entry.paymentStatus) counts[entry.paymentStatus]++
-    }
-    return counts
-  }, [roster])
+  }, [roster, search, letterFilter, attendanceFilter, selectedDayId])
 
   async function handleDelete(entry: RosterEntry) {
     try {
