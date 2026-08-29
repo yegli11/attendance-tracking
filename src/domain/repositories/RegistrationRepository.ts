@@ -15,6 +15,7 @@ export interface CreateRegistrationInput {
   representativeName: string | null
   paymentStatus: PaymentStatus | null
   team: Team | null
+  isOnline: boolean
   /** Pass null to auto-generate a code from the event name. */
   code: string | null
 }
@@ -32,6 +33,7 @@ export interface UpdateRegistrationInput {
   representativeName: string | null
   paymentStatus: PaymentStatus | null
   team: Team | null
+  isOnline: boolean
 }
 
 export interface RegistrationSummary {

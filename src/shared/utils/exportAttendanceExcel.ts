@@ -40,6 +40,7 @@ function buildColumns(
     { header: header('Edad'), cell: (entry) => ({ value: ageLabelForPerson(entry) }), width: 12 },
     { header: header('Genero'), cell: (entry) => ({ value: entry.genderName }), width: 14 },
     { header: header('Telefono'), cell: (entry) => ({ value: entry.phoneNumber }), width: 16 },
+    { header: header('Origen'), cell: (entry) => ({ value: entry.isOnline ? 'Online' : 'Presencial' }), width: 14 },
     ...(requiresRepresentative
       ? [
           {

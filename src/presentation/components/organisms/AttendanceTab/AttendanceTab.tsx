@@ -9,6 +9,7 @@ import TextField from '@mui/material/TextField'
 import Button from '@mui/material/Button'
 import Alert from '@mui/material/Alert'
 import Chip from '@mui/material/Chip'
+import type { EventDay } from '@/domain/entities/EventDay'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import type { Team } from '@/domain/entities/Team'
 import { findRegistrationByCode } from '@/application/useCases/findRegistrationByCode'
@@ -19,6 +20,7 @@ import { TeamBadge } from '@/presentation/components/atoms/TeamBadge'
 import { AttendanceMatchCard } from '@/presentation/components/molecules/AttendanceMatchCard'
 import { TeamStatCard } from '@/presentation/components/molecules/TeamStatCard'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
+import { findBirthdayEventDay } from '@/shared/utils/findBirthdayEventDay'
 import { useToast } from '@/presentation/hooks/useToast'
 
 const TEAMS: Team[] = ['naranja', 'rojo', 'verde', 'azul']
@@ -26,6 +28,7 @@ const TEAMS: Team[] = ['naranja', 'rojo', 'verde', 'azul']
 interface Props {
   eventId: number
   roster: RosterEntry[]
+  days: EventDay[]
   selectedDayId: number
   onAttendanceChange: (entry: RosterEntry) => void
 }
@@ -38,7 +41,7 @@ function attendedAtForDay(entry: RosterEntry, eventDayId: number): string | null
   return entry.attendance.find((day) => day.eventDayId === eventDayId)?.attendedAt ?? null
 }
 
-export function AttendanceTab({ eventId, roster, selectedDayId, onAttendanceChange }: Props) {
+export function AttendanceTab({ eventId, roster, days, selectedDayId, onAttendanceChange }: Props) {
   const { showSuccess, showError } = useToast()
   const [code, setCode] = useState('')
   const [result, setResult] = useState<RosterEntry | null | undefined>(undefined)
@@ -98,6 +101,9 @@ export function AttendanceTab({ eventId, roster, selectedDayId, onAttendanceChan
   }
 
   const resultAttended = result ? attendedAtForDay(result, selectedDayId) !== null : false
+  const resultBirthdayToday = result
+    ? findBirthdayEventDay(result.birthdate, days)?.id === selectedDayId
+    : false
 
   const presentes = [...roster]
     .map((entry) => ({ entry, attendedAt: attendedAtForDay(entry, selectedDayId) }))
@@ -185,6 +191,11 @@ export function AttendanceTab({ eventId, roster, selectedDayId, onAttendanceChan
 
             {result && (
               <Box sx={{ mt: 2.5 }}>
+                {resultBirthdayToday && (
+                  <Alert severity="success" icon={<span>🎉</span>} sx={{ mb: 1.5 }}>
+                    ¡Hoy cumple años! Aprovecha para felicitarlo/a.
+                  </Alert>
+                )}
                 <Stack direction="row" sx={{ borderRadius: 2, overflow: 'hidden', boxShadow: 2 }}>
                   <Box
                     sx={{

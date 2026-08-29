@@ -73,6 +73,7 @@ export type Database = {
           created_at: string
           event_id: number
           id: number
+          is_online: boolean
           payment_status: string | null
           person_id: number
           team: string | null
@@ -82,6 +83,7 @@ export type Database = {
           created_at?: string
           event_id: number
           id?: never
+          is_online?: boolean
           payment_status?: string | null
           person_id: number
           team?: string | null
@@ -91,6 +93,7 @@ export type Database = {
           created_at?: string
           event_id?: number
           id?: never
+          is_online?: boolean
           payment_status?: string | null
           person_id?: number
           team?: string | null

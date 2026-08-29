@@ -307,6 +307,7 @@ export function EventWorkspacePage() {
         <AttendanceTab
           eventId={event.id}
           roster={roster}
+          days={event.days}
           selectedDayId={selectedDayId}
           onAttendanceChange={handleRosterEntryChange}
         />
