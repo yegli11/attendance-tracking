@@ -18,6 +18,7 @@ const updateRegistrationSchema = z
     paymentStatus: z.enum(['pendiente', 'financiado', 'pagado']).optional().nullable(),
     requiresPaymentStatus: z.boolean(),
     team: z.enum(['naranja', 'rojo', 'verde', 'azul']).optional().nullable(),
+    isOnline: z.boolean(),
   })
   .superRefine((value, ctx) => {
     if (value.requiresRepresentative && !value.representativeName) {
@@ -71,6 +72,7 @@ export async function updateRegistration(
     representativeName: parsed.representativeName || null,
     paymentStatus: parsed.paymentStatus || null,
     team: parsed.team || null,
+    isOnline: parsed.isOnline,
   }
   return repository.update(updateInput)
 }

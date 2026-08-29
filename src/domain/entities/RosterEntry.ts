@@ -28,4 +28,6 @@ export interface RosterEntry {
   representativeName: string | null
   paymentStatus: PaymentStatus | null
   team: Team | null
+  /** Registered through the online form rather than in person. */
+  isOnline: boolean
 }
