@@ -43,7 +43,7 @@ function attendedAtForDay(entry: RosterEntry, eventDayId: number): string | null
   return entry.attendance.find((day) => day.eventDayId === eventDayId)?.attendedAt ?? null
 }
 
-export function AttendanceTab({ eventId, roster, leaders, selectedDayId, onAttendanceChange }: Props) {
+export function AttendanceTab({ eventId, roster, days, leaders, selectedDayId, onAttendanceChange }: Props) {
   const { showSuccess, showError } = useToast()
   const [code, setCode] = useState('')
   const [result, setResult] = useState<RosterEntry | null | undefined>(undefined)

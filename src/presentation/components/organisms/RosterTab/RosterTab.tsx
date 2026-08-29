@@ -25,7 +25,7 @@ function codeGroup(code: string): string {
 }
 
 const PAYMENT_STATUSES: PaymentStatus[] = ['pagado', 'financiado', 'pendiente']
-export type Rosthttps://github.com/yegli11/attendance-tracking/pull/27/conflict?name=src%252Fpresentation%252Fcomponents%252Fpages%252FEventWorkspacePage%252FEventWorkspacePage.tsx&ancestor_oid=2abc6a45b317d7a8b38d1e4acefd26e1a44b147b&base_oid=cac4dd46401c925d2a56a36631723b5fa0d2ec99&head_oid=fb3378974edd5fa3a38d9730778158d1b72f5637erAttendanceFilter = 'all' | 'attended' | 'missing' | 'total'
+export type RosterAttendanceFilter = 'all' | 'attended' | 'missing' | 'total'
 
 interface Props {
   roster: RosterEntry[]
@@ -72,7 +72,15 @@ export function RosterTab({
       if (attendanceFilter === 'missing' && attendedToday) return false
       return true
     })
-  }, [roster, search, letterFilter, attendanceFilter, selectedDayId])
+  }, [roster, search, letterFilter, paymentFilter, attendanceFilter, selectedDayId])
+
+  const paymentCounts = useMemo(() => {
+    const counts: Record<PaymentStatus, number> = { pagado: 0, financiado: 0, pendiente: 0 }
+    for (const entry of roster) {
+      if (entry.paymentStatus) counts[entry.paymentStatus]++
+    }
+    return counts
+  }, [roster])
 
   async function handleDelete(entry: RosterEntry) {
     try {
