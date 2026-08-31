@@ -203,6 +203,18 @@ export const supabaseRegistrationRepository: RegistrationRepository = {
   },
 
   async update(input) {
+    const code = input.code.trim().toUpperCase()
+    const { data: codeOwner, error: codeOwnerError } = await supabase
+      .schema('event')
+      .from('registration')
+      .select('id')
+      .eq('event_id', input.eventId)
+      .eq('code', code)
+      .neq('id', input.registrationId)
+      .maybeSingle()
+    if (codeOwnerError) throw codeOwnerError
+    if (codeOwner) throw new Error('Ese código ya fue asignado a otro asistente, ingresa uno diferente.')
+
     const { error: personError } = await supabase
       .schema('person')
       .from('person')
@@ -296,7 +308,7 @@ export const supabaseRegistrationRepository: RegistrationRepository = {
     const { data: registration, error: registrationError } = await supabase
       .schema('event')
       .from('registration')
-      .update({ payment_status: input.paymentStatus, team: input.team, is_online: input.isOnline })
+      .update({ code, payment_status: input.paymentStatus, team: input.team, is_online: input.isOnline })
       .eq('id', input.registrationId)
       .select()
       .single()

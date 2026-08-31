@@ -23,6 +23,9 @@ export interface CreateRegistrationInput {
 export interface UpdateRegistrationInput {
   registrationId: number
   personId: number
+  eventId: number
+  /** Entry code; can be changed as long as it stays unique within the event. */
+  code: string
   firstName: string
   lastName: string
   birthdate: string | null
