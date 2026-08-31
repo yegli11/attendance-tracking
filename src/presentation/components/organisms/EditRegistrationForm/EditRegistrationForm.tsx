@@ -10,7 +10,6 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import DialogActions from '@mui/material/DialogActions'
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import type { Gender } from '@/domain/entities/Gender'
 import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import type { Team } from '@/domain/entities/Team'
@@ -41,6 +40,7 @@ export function EditRegistrationForm({
   onCancel,
 }: Props) {
   const { showSuccess, showError } = useToast()
+  const [code, setCode] = useState(entry.code)
   const [firstName, setFirstName] = useState(entry.firstName)
   const [lastName, setLastName] = useState(entry.lastName)
   const [birthInputMode, setBirthInputMode] = useState<BirthInputMode>(entry.birthdate ? 'birthdate' : 'age')
@@ -66,6 +66,8 @@ export function EditRegistrationForm({
       const updated = await updateRegistration(supabaseRegistrationRepository, {
         registrationId: entry.registrationId,
         personId: entry.personId,
+        eventId: entry.eventId,
+        code,
         firstName,
         lastName,
         birthdate: birthInputMode === 'birthdate' && birthdate?.isValid() ? birthdate.format('YYYY-MM-DD') : null,
@@ -99,26 +101,25 @@ export function EditRegistrationForm({
         <TextField label="Apellido" value={lastName} onChange={(e) => setLastName(e.target.value)} fullWidth />
       </Stack>
 
+      <TextField
+        label="Código de entrada"
+        value={code}
+        onChange={(e) => setCode(e.target.value.toUpperCase())}
+        helperText="Debe ser único dentro del evento."
+        sx={{ maxWidth: { sm: 220 } }}
+        fullWidth
+      />
+
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'flex-start' }}>
         <Box sx={{ flex: 1, width: '100%' }}>
-          {requiresRepresentative ? (
-            <BirthdateOrAgeField
-              mode={birthInputMode}
-              onModeChange={setBirthInputMode}
-              birthdate={birthdate}
-              onBirthdateChange={setBirthdate}
-              ageYears={ageYears}
-              onAgeYearsChange={setAgeYears}
-            />
-          ) : (
-            <DatePicker
-              label="Fecha de nacimiento"
-              value={birthdate}
-              onChange={(value) => setBirthdate(value)}
-              disableFuture
-              slotProps={{ textField: { fullWidth: true, slotProps: { inputLabel: { shrink: true } } } }}
-            />
-          )}
+          <BirthdateOrAgeField
+            mode={birthInputMode}
+            onModeChange={setBirthInputMode}
+            birthdate={birthdate}
+            onBirthdateChange={setBirthdate}
+            ageYears={ageYears}
+            onAgeYearsChange={setAgeYears}
+          />
         </Box>
         <TextField
           select

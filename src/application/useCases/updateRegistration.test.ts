@@ -35,6 +35,8 @@ function createRepository(): RegistrationRepository {
 const baseInput = {
   registrationId: 1,
   personId: 1,
+  eventId: 1,
+  code: 'CI-001',
   firstName: 'María',
   lastName: 'Pérez',
   birthdate: '2015-01-01',
@@ -95,6 +97,33 @@ describe('updateRegistration', () => {
     })
 
     expect(repository.update).toHaveBeenCalledWith(expect.objectContaining({ birthdate: null, ageYears: 8 }))
+  })
+
+  it('normalizes the edited code to uppercase', async () => {
+    const repository = createRepository()
+
+    await updateRegistration(repository, {
+      ...baseInput,
+      code: 'ci-009',
+      representativeName: null,
+      requiresRepresentative: false,
+    })
+
+    expect(repository.update).toHaveBeenCalledWith(expect.objectContaining({ code: 'CI-009' }))
+  })
+
+  it('rejects a blank code', async () => {
+    const repository = createRepository()
+
+    await expect(
+      updateRegistration(repository, {
+        ...baseInput,
+        code: '   ',
+        representativeName: null,
+        requiresRepresentative: false,
+      }),
+    ).rejects.toThrow(ZodError)
+    expect(repository.update).not.toHaveBeenCalled()
   })
 
   it('rejects a missing payment status when the category requires one', async () => {

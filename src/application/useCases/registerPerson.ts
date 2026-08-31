@@ -29,17 +29,14 @@ const registerPersonSchema = z
     }
 
     const birthdate = value.birthdate?.trim() || null
-    if (value.requiresRepresentative) {
-      if (!birthdate && value.ageYears == null) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['birthdate'],
-          message: 'Ingresa la fecha de nacimiento o la edad.',
-        })
-        return
-      }
-    } else if (!birthdate) {
-      ctx.addIssue({ code: 'custom', path: ['birthdate'], message: 'Ingresa la fecha de nacimiento.' })
+    // Birthdate is preferred, but an age is always accepted as a fallback when
+    // the exact date is unknown (e.g. records migrated from paper sheets).
+    if (!birthdate && value.ageYears == null) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['birthdate'],
+        message: 'Ingresa la fecha de nacimiento o la edad.',
+      })
       return
     }
     if (birthdate) {

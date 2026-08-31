@@ -17,8 +17,9 @@ interface Props {
   onAgeYearsChange: (value: string) => void
 }
 
-// Some past registrations only recorded an age, not an exact birthdate. Lets
-// staff pick either input for the "Niños" category instead of forcing a date.
+// Some registrations only have an age, not an exact birthdate (e.g. records
+// migrated from paper sheets). Lets staff pick either input instead of forcing
+// a date.
 export function BirthdateOrAgeField({
   mode,
   onModeChange,

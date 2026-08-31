@@ -13,7 +13,6 @@ import Checkbox from '@mui/material/Checkbox'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
-import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import type { Gender } from '@/domain/entities/Gender'
 import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import type { Team } from '@/domain/entities/Team'
@@ -130,24 +129,14 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: 'flex-start' }}>
               <Box sx={{ flex: 1, width: '100%' }}>
-                {requiresRepresentative ? (
-                  <BirthdateOrAgeField
-                    mode={birthInputMode}
-                    onModeChange={setBirthInputMode}
-                    birthdate={birthdate}
-                    onBirthdateChange={setBirthdate}
-                    ageYears={ageYears}
-                    onAgeYearsChange={setAgeYears}
-                  />
-                ) : (
-                  <DatePicker
-                    label="Fecha de nacimiento"
-                    value={birthdate}
-                    onChange={(value) => setBirthdate(value)}
-                    disableFuture
-                    slotProps={{ textField: { fullWidth: true, slotProps: { inputLabel: { shrink: true } } } }}
-                  />
-                )}
+                <BirthdateOrAgeField
+                  mode={birthInputMode}
+                  onModeChange={setBirthInputMode}
+                  birthdate={birthdate}
+                  onBirthdateChange={setBirthdate}
+                  ageYears={ageYears}
+                  onAgeYearsChange={setAgeYears}
+                />
               </Box>
               <TextField
                 select
