@@ -6,6 +6,12 @@ const updateRegistrationSchema = z
   .object({
     registrationId: z.number().int().positive(),
     personId: z.number().int().positive(),
+    eventId: z.number().int().positive(),
+    code: z
+      .string()
+      .trim()
+      .min(1, 'Ingresa el código.')
+      .transform((value) => value.toUpperCase()),
     firstName: z.string().trim().min(1, 'Ingresa el nombre.'),
     lastName: z.string().trim().min(1, 'Ingresa el apellido.'),
     birthdate: z.string().trim().optional().nullable(),
@@ -29,17 +35,14 @@ const updateRegistrationSchema = z
     }
 
     const birthdate = value.birthdate?.trim() || null
-    if (value.requiresRepresentative) {
-      if (!birthdate && value.ageYears == null) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['birthdate'],
-          message: 'Ingresa la fecha de nacimiento o la edad.',
-        })
-        return
-      }
-    } else if (!birthdate) {
-      ctx.addIssue({ code: 'custom', path: ['birthdate'], message: 'Ingresa la fecha de nacimiento.' })
+    // Birthdate is preferred, but an age is always accepted as a fallback when
+    // the exact date is unknown (e.g. records migrated from paper sheets).
+    if (!birthdate && value.ageYears == null) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['birthdate'],
+        message: 'Ingresa la fecha de nacimiento o la edad.',
+      })
       return
     }
     if (birthdate) {
@@ -62,6 +65,8 @@ export async function updateRegistration(
   const updateInput: UpdateRegistrationInput = {
     registrationId: parsed.registrationId,
     personId: parsed.personId,
+    eventId: parsed.eventId,
+    code: parsed.code,
     firstName: parsed.firstName,
     lastName: parsed.lastName,
     birthdate: birthdate,
