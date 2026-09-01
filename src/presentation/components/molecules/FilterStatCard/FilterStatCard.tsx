@@ -1,14 +1,16 @@
 import Card from '@mui/material/Card'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
-import { alpha } from '@mui/material/styles'
 
 interface Props {
   label: string
   value: number
   active: boolean
   onClick: () => void
-  /** Accent color for the dot + active border. Omit for a neutral card ("Todos"). */
+  /**
+   * Accent color for the dot + active border. Accepts a hex/rgb string or an
+   * MUI theme token path ("success.main"). Omit for a neutral card ("Todos").
+   */
   accent?: string
 }
 
@@ -38,7 +40,7 @@ export function FilterStatCard({ label, value, active, onClick, accent }: Props)
         cursor: 'pointer',
         borderColor: active ? activeColor : 'divider',
         borderWidth: active ? 2 : 1,
-        bgcolor: active ? alpha(accent ?? '#060773', 0.06) : 'background.paper',
+        bgcolor: active ? 'action.selected' : 'background.paper',
         '&:hover': { borderColor: activeColor },
       }}
     >
