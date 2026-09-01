@@ -323,22 +323,16 @@ export function EventWorkspacePage() {
 
       {requiresPaymentStatus && (
         <Grid container spacing={1}>
-          <Grid size={{ xs: 6, sm: 3 }}>
-            <FilterStatCard
-              label="Todos"
-              value={roster.length}
-              active={paymentFilter === 'all'}
-              onClick={() => handlePaymentFilterClick('all')}
-            />
-          </Grid>
           {PAYMENT_STATUSES.map((paymentStatus) => (
-            <Grid key={paymentStatus} size={{ xs: 6, sm: 3 }}>
+            <Grid key={paymentStatus} size={{ xs: 6, sm: 4 }}>
               <FilterStatCard
                 label={paymentStatusLabel(paymentStatus)}
                 value={paymentCounts[paymentStatus]}
                 accent={paymentStatusColor(paymentStatus).bg}
                 active={paymentFilter === paymentStatus}
-                onClick={() => handlePaymentFilterClick(paymentStatus)}
+                onClick={() =>
+                  handlePaymentFilterClick(paymentFilter === paymentStatus ? 'all' : paymentStatus)
+                }
               />
             </Grid>
           ))}
