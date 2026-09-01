@@ -8,6 +8,7 @@ import Typography from '@mui/material/Typography'
 import type { Gender } from '@/domain/entities/Gender'
 import type { EventDay } from '@/domain/entities/EventDay'
 import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
+import type { Team } from '@/domain/entities/Team'
 import type { RosterEntry } from '@/domain/entities/RosterEntry'
 import { deleteRegistration } from '@/application/useCases/deleteRegistration'
 import { supabaseRegistrationRepository } from '@/infrastructure/supabase/repositories/SupabaseRegistrationRepository'
@@ -15,7 +16,7 @@ import { Icon } from '@/presentation/components/atoms/Icon'
 import { RosterCard } from '@/presentation/components/molecules/RosterCard'
 import { Modal } from '@/presentation/components/organisms/Modal'
 import { EditRegistrationForm } from '@/presentation/components/organisms/EditRegistrationForm'
-import { paymentStatusColor, paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
+import { teamColor, teamLabel } from '@/shared/utils/teamLabel'
 import { useToast } from '@/presentation/hooks/useToast'
 
 /** Codes are generated as "A-01", "B-02"... — the letter identifies which sign-up sheet ("planilla") a person came from. */
@@ -24,14 +25,18 @@ function codeGroup(code: string): string {
   return dashIndex > 0 ? code.slice(0, dashIndex) : code
 }
 
-const PAYMENT_STATUSES: PaymentStatus[] = ['pagado', 'financiado', 'pendiente']
+const TEAMS: Team[] = ['naranja', 'rojo', 'verde', 'azul']
+type TeamFilter = Team | 'all' | 'none'
+
 export type RosterAttendanceFilter = 'all' | 'attended' | 'missing' | 'total'
+export type RosterPaymentFilter = PaymentStatus | 'all'
 
 interface Props {
   roster: RosterEntry[]
   days: EventDay[]
   selectedDayId: number
   attendanceFilter: RosterAttendanceFilter
+  paymentFilter: RosterPaymentFilter
   genders: Gender[]
   requiresRepresentative: boolean
   requiresPaymentStatus: boolean
@@ -44,6 +49,7 @@ export function RosterTab({
   days,
   selectedDayId,
   attendanceFilter,
+  paymentFilter,
   genders,
   requiresRepresentative,
   requiresPaymentStatus,
@@ -53,7 +59,7 @@ export function RosterTab({
   const { showSuccess, showError } = useToast()
   const [search, setSearch] = useState('')
   const [letterFilter, setLetterFilter] = useState<string | 'all'>('all')
-  const [paymentFilter, setPaymentFilter] = useState<PaymentStatus | 'all'>('all')
+  const [teamFilter, setTeamFilter] = useState<TeamFilter>('all')
   const [editingEntry, setEditingEntry] = useState<RosterEntry | null>(null)
 
   const availableLetters = useMemo(
@@ -66,21 +72,27 @@ export function RosterTab({
     return roster.filter((entry) => {
       if (letterFilter !== 'all' && codeGroup(entry.code) !== letterFilter) return false
       if (paymentFilter !== 'all' && entry.paymentStatus !== paymentFilter) return false
+      if (teamFilter === 'none' && entry.team !== null) return false
+      if (teamFilter !== 'all' && teamFilter !== 'none' && entry.team !== teamFilter) return false
       if (query && !`${entry.firstName} ${entry.lastName} ${entry.code}`.toLowerCase().includes(query)) return false
       const attendedToday = entry.attendance.some((day) => day.eventDayId === selectedDayId && day.attendedAt !== null)
       if ((attendanceFilter === 'attended' || attendanceFilter === 'total') && !attendedToday) return false
       if (attendanceFilter === 'missing' && attendedToday) return false
       return true
     })
-  }, [roster, search, letterFilter, paymentFilter, attendanceFilter, selectedDayId])
+  }, [roster, search, letterFilter, paymentFilter, teamFilter, attendanceFilter, selectedDayId])
 
-  const paymentCounts = useMemo(() => {
-    const counts: Record<PaymentStatus, number> = { pagado: 0, financiado: 0, pendiente: 0 }
+  const teamCounts = useMemo(() => {
+    const counts: Record<Team, number> = { naranja: 0, rojo: 0, verde: 0, azul: 0 }
+    let none = 0
     for (const entry of roster) {
-      if (entry.paymentStatus) counts[entry.paymentStatus]++
+      if (entry.team) counts[entry.team]++
+      else none++
     }
-    return counts
+    return { counts, none }
   }, [roster])
+
+  const hasTeams = roster.length > 0 && teamCounts.none < roster.length
 
   async function handleDelete(entry: RosterEntry) {
     try {
@@ -144,33 +156,46 @@ export function RosterTab({
         )}
       </Stack>
 
-      {requiresPaymentStatus && (
+      {hasTeams && (
         <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap' }}>
           <Chip
             label={`Todos (${roster.length})`}
             size="small"
-            onClick={() => setPaymentFilter('all')}
+            onClick={() => setTeamFilter('all')}
             sx={
-              paymentFilter === 'all'
+              teamFilter === 'all'
                 ? { bgcolor: 'text.primary', color: 'common.white', fontWeight: 700 }
                 : { fontWeight: 700 }
             }
-            variant={paymentFilter === 'all' ? 'filled' : 'outlined'}
+            variant={teamFilter === 'all' ? 'filled' : 'outlined'}
           />
-          {PAYMENT_STATUSES.map((status) => (
+          {TEAMS.map((value) => (
             <Chip
-              key={status}
-              label={`${paymentStatusLabel(status)} (${paymentCounts[status]})`}
+              key={value}
+              label={`${teamLabel(value)} (${teamCounts.counts[value]})`}
               size="small"
-              onClick={() => setPaymentFilter(status)}
+              onClick={() => setTeamFilter(value)}
               sx={
-                paymentFilter === status
-                  ? { bgcolor: paymentStatusColor(status).bg, color: paymentStatusColor(status).color, fontWeight: 700 }
-                  : { borderColor: paymentStatusColor(status).bg, color: paymentStatusColor(status).bg, fontWeight: 700 }
+                teamFilter === value
+                  ? { bgcolor: teamColor(value).bg, color: teamColor(value).color, fontWeight: 700 }
+                  : { borderColor: teamColor(value).bg, color: teamColor(value).bg, fontWeight: 700 }
               }
-              variant={paymentFilter === status ? 'filled' : 'outlined'}
+              variant={teamFilter === value ? 'filled' : 'outlined'}
             />
           ))}
+          {teamCounts.none > 0 && (
+            <Chip
+              label={`Sin equipo (${teamCounts.none})`}
+              size="small"
+              onClick={() => setTeamFilter('none')}
+              sx={
+                teamFilter === 'none'
+                  ? { bgcolor: 'text.primary', color: 'common.white', fontWeight: 700 }
+                  : { fontWeight: 700 }
+              }
+              variant={teamFilter === 'none' ? 'filled' : 'outlined'}
+            />
+          )}
         </Stack>
       )}
 

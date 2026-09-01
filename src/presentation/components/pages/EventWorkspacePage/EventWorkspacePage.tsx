@@ -28,15 +28,19 @@ import { supabaseRegistrationRepository } from '@/infrastructure/supabase/reposi
 import { supabaseGenderRepository } from '@/infrastructure/supabase/repositories/SupabaseGenderRepository'
 import { supabaseTeamLeaderRepository } from '@/infrastructure/supabase/repositories/SupabaseTeamLeaderRepository'
 import { supabaseStaffMemberRepository } from '@/infrastructure/supabase/repositories/SupabaseStaffMemberRepository'
+import type { PaymentStatus } from '@/domain/entities/PaymentStatus'
 import { Icon } from '@/presentation/components/atoms/Icon'
 import { StatCard } from '@/presentation/components/molecules/StatCard'
+import { FilterStatCard } from '@/presentation/components/molecules/FilterStatCard'
 import { RosterTab } from '@/presentation/components/organisms/RosterTab'
+import type { RosterPaymentFilter } from '@/presentation/components/organisms/RosterTab'
 import { RegisterTab } from '@/presentation/components/organisms/RegisterTab'
 import { AttendanceTab } from '@/presentation/components/organisms/AttendanceTab'
 import { LeadersTab } from '@/presentation/components/organisms/LeadersTab'
 import { StaffTab } from '@/presentation/components/organisms/StaffTab'
 import { formatEventDateRange, formatEventDayLabel } from '@/shared/utils/formatEventDate'
 import { getCategoryColor } from '@/shared/utils/categoryColor'
+import { paymentStatusColor, paymentStatusLabel } from '@/shared/utils/paymentStatusLabel'
 import { categoryRequiresRepresentative } from '@/shared/utils/categoryRequiresRepresentative'
 import { categoryRequiresPaymentStatus } from '@/shared/utils/categoryRequiresPaymentStatus'
 import { exportAttendanceExcel } from '@/shared/utils/exportAttendanceExcel'
@@ -45,6 +49,8 @@ import { useToast } from '@/presentation/hooks/useToast'
 type Status = 'loading' | 'ready' | 'error' | 'not-found'
 type TabKey = 'lista' | 'inscribir' | 'asistencia' | 'lideres' | 'equipo'
 type AttendanceFilter = 'all' | 'attended' | 'missing' | 'total'
+
+const PAYMENT_STATUSES: PaymentStatus[] = ['pagado', 'financiado', 'pendiente']
 
 export function EventWorkspacePage() {
   const { eventId } = useParams<{ eventId: string }>()
@@ -64,9 +70,15 @@ export function EventWorkspacePage() {
   const [selectedDayId, setSelectedDayId] = useState<number | null>(null)
   const [retryToken, setRetryToken] = useState(0)
   const [attendanceFilter, setAttendanceFilter] = useState<AttendanceFilter>('all')
+  const [paymentFilter, setPaymentFilter] = useState<RosterPaymentFilter>('all')
 
   function handleFilterCardClick(filter: AttendanceFilter) {
     setAttendanceFilter(filter)
+    setTab('lista')
+  }
+
+  function handlePaymentFilterClick(filter: RosterPaymentFilter) {
+    setPaymentFilter(filter)
     setTab('lista')
   }
 
@@ -137,6 +149,14 @@ export function EventWorkspacePage() {
       totalAttendance: attended + attendedLeaders + attendedStaff,
     }
   }, [roster, leaders, staffMembers, selectedDayId])
+
+  const paymentCounts = useMemo(() => {
+    const counts: Record<PaymentStatus, number> = { pagado: 0, financiado: 0, pendiente: 0 }
+    for (const entry of roster) {
+      if (entry.paymentStatus) counts[entry.paymentStatus]++
+    }
+    return counts
+  }, [roster])
 
   function handleRegistered(entry: RosterEntry) {
     setRoster((current) => [entry, ...current])
@@ -301,6 +321,30 @@ export function EventWorkspacePage() {
         </Grid>
       </Grid>
 
+      {requiresPaymentStatus && (
+        <Grid container spacing={1}>
+          <Grid size={{ xs: 6, sm: 3 }}>
+            <FilterStatCard
+              label="Todos"
+              value={roster.length}
+              active={paymentFilter === 'all'}
+              onClick={() => handlePaymentFilterClick('all')}
+            />
+          </Grid>
+          {PAYMENT_STATUSES.map((paymentStatus) => (
+            <Grid key={paymentStatus} size={{ xs: 6, sm: 3 }}>
+              <FilterStatCard
+                label={paymentStatusLabel(paymentStatus)}
+                value={paymentCounts[paymentStatus]}
+                accent={paymentStatusColor(paymentStatus).bg}
+                active={paymentFilter === paymentStatus}
+                onClick={() => handlePaymentFilterClick(paymentStatus)}
+              />
+            </Grid>
+          ))}
+        </Grid>
+      )}
+
       <Tabs
         value={tab}
         onChange={(_, value: TabKey) => setTab(value)}
@@ -320,6 +364,7 @@ export function EventWorkspacePage() {
           days={event.days}
           selectedDayId={selectedDayId}
           attendanceFilter={attendanceFilter}
+          paymentFilter={paymentFilter}
           genders={genders}
           requiresRepresentative={requiresRepresentative}
           requiresPaymentStatus={requiresPaymentStatus}
