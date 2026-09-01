@@ -90,7 +90,7 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
         requiresRepresentative,
         paymentStatus: requiresPaymentStatus ? paymentStatus : null,
         requiresPaymentStatus,
-        team: requiresRepresentative && team ? team : null,
+        team: team || null,
         isOnline,
         code: codeMode === 'manual' ? manualCode : null,
       })
@@ -163,22 +163,20 @@ export function RegisterTab({ eventId, genders, requiresRepresentative, requires
               />
             )}
 
-            {requiresRepresentative && (
-              <TextField
-                select
-                label="Equipo"
-                value={team}
-                onChange={(e) => setTeam(e.target.value as Team | '')}
-                fullWidth
-              >
-                <MenuItem value="">Sin asignar</MenuItem>
-                {TEAMS.map((value) => (
-                  <MenuItem key={value} value={value}>
-                    {teamLabel(value)}
-                  </MenuItem>
-                ))}
-              </TextField>
-            )}
+            <TextField
+              select
+              label="Equipo"
+              value={team}
+              onChange={(e) => setTeam(e.target.value as Team | '')}
+              fullWidth
+            >
+              <MenuItem value="">Sin asignar</MenuItem>
+              {TEAMS.map((value) => (
+                <MenuItem key={value} value={value}>
+                  {teamLabel(value)}
+                </MenuItem>
+              ))}
+            </TextField>
 
             {requiresPaymentStatus && (
               <TextField
