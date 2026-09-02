@@ -10,11 +10,28 @@ interface Props {
   total: number
   presentLeaders?: number
   totalLeaders?: number
+  onClick?: () => void
+  active?: boolean
 }
 
-export function TeamStatCard({ team, present, total, presentLeaders, totalLeaders }: Props) {
+export function TeamStatCard({ team, present, total, presentLeaders, totalLeaders, onClick, active }: Props) {
   return (
-    <Card variant="outlined" sx={{ display: 'flex', alignItems: 'center', gap: 1.5, p: 2, height: '100%' }}>
+    <Card
+      variant="outlined"
+      onClick={onClick}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1.5,
+        p: 2,
+        height: '100%',
+        cursor: onClick ? 'pointer' : 'default',
+        borderColor: active ? teamColor(team).bg : 'divider',
+        borderWidth: active ? 2 : 1,
+        transition: 'border-color 120ms',
+        ...(onClick && { '&:hover': { borderColor: teamColor(team).bg } }),
+      }}
+    >
       <Box
         sx={{
           width: 38,

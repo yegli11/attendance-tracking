@@ -22,9 +22,18 @@ import { AttendanceMatchCard } from '@/presentation/components/molecules/Attenda
 import { TeamStatCard } from '@/presentation/components/molecules/TeamStatCard'
 import { ageLabelForPerson } from '@/shared/utils/calculateAge'
 import { findBirthdayEventDay } from '@/shared/utils/findBirthdayEventDay'
+import { teamLabel } from '@/shared/utils/teamLabel'
 import { useToast } from '@/presentation/hooks/useToast'
 
 const TEAMS: Team[] = ['naranja', 'rojo', 'verde', 'azul']
+
+/** Colored chip for a gender: pink for Femenino, blue for Masculino, grey for anything else. */
+function genderColor(name: string): string {
+  const key = name.trim().toLowerCase()
+  if (key.startsWith('f')) return '#EC4899'
+  if (key.startsWith('m')) return '#3B82F6'
+  return '#6B7280'
+}
 
 interface Props {
   eventId: number
@@ -52,6 +61,33 @@ export function AttendanceTab({ eventId, roster, days, leaders, selectedDayId, o
   const [error, setError] = useState<string | null>(null)
   const [isSearching, setIsSearching] = useState(false)
   const [isToggling, setIsToggling] = useState(false)
+  const [selectedTeam, setSelectedTeam] = useState<Team | null>(null)
+  const [genderFilter, setGenderFilter] = useState<string>('all')
+
+  function handleTeamCardClick(team: Team) {
+    setGenderFilter('all')
+    setSelectedTeam((current) => (current === team ? null : team))
+  }
+
+  const teamRoster = useMemo(
+    () => (selectedTeam ? roster.filter((entry) => entry.team === selectedTeam) : []),
+    [roster, selectedTeam],
+  )
+
+  const teamGenderNames = useMemo(
+    () => [...new Set(teamRoster.map((entry) => entry.genderName).filter(Boolean))].sort(),
+    [teamRoster],
+  )
+
+  const teamRosterFiltered = useMemo(
+    () =>
+      [...teamRoster]
+        .filter((entry) => genderFilter === 'all' || entry.genderName === genderFilter)
+        .sort((a, b) =>
+          `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`, 'es'),
+        ),
+    [teamRoster, genderFilter],
+  )
 
   const nameMatches = useMemo(() => {
     const query = nameQuery.trim().toLowerCase()
@@ -134,10 +170,108 @@ export function AttendanceTab({ eventId, roster, days, leaders, selectedDayId, o
                 total={stat.total}
                 presentLeaders={stat.presentLeaders}
                 totalLeaders={stat.totalLeaders}
+                active={selectedTeam === stat.team}
+                onClick={() => handleTeamCardClick(stat.team)}
               />
             </Grid>
           ))}
         </Grid>
+      )}
+
+      {selectedTeam && (
+        <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, p: { xs: 2, sm: 3 } }}>
+          <Stack
+            direction="row"
+            sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.5, gap: 1 }}
+          >
+            <Typography sx={{ fontWeight: 700, fontSize: '1.0625rem' }}>
+              Equipo {teamLabel(selectedTeam)} · {teamRoster.length} inscritos
+            </Typography>
+            <Button size="small" color="inherit" onClick={() => setSelectedTeam(null)}>
+              Cerrar
+            </Button>
+          </Stack>
+
+          <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', mb: 2 }}>
+            <Chip
+              label={`Todos (${teamRoster.length})`}
+              size="small"
+              onClick={() => setGenderFilter('all')}
+              variant={genderFilter === 'all' ? 'filled' : 'outlined'}
+              sx={
+                genderFilter === 'all'
+                  ? { bgcolor: 'text.primary', color: 'common.white', fontWeight: 700 }
+                  : { fontWeight: 700 }
+              }
+            />
+            {teamGenderNames.map((name) => {
+              const count = teamRoster.filter((entry) => entry.genderName === name).length
+              const chipColor = genderColor(name)
+              const selected = genderFilter === name
+              return (
+                <Chip
+                  key={name}
+                  label={`${name} (${count})`}
+                  size="small"
+                  onClick={() => setGenderFilter(selected ? 'all' : name)}
+                  variant={selected ? 'filled' : 'outlined'}
+                  sx={
+                    selected
+                      ? { bgcolor: chipColor, color: 'common.white', fontWeight: 700 }
+                      : { borderColor: chipColor, color: chipColor, fontWeight: 700 }
+                  }
+                />
+              )
+            })}
+          </Stack>
+
+          {teamRosterFiltered.length === 0 ? (
+            <Typography sx={{ color: 'text.secondary', textAlign: 'center', py: 3 }}>
+              No hay inscritos con ese filtro.
+            </Typography>
+          ) : (
+            <Stack spacing={1}>
+              {teamRosterFiltered.map((entry) => {
+                const attended = attendedAtForDay(entry, selectedDayId) !== null
+                return (
+                  <Stack
+                    key={entry.registrationId}
+                    direction="row"
+                    sx={{
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      py: 0.75,
+                      borderBottom: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Box>
+                      <Typography sx={{ fontWeight: 600, fontSize: '0.875rem' }}>
+                        {entry.firstName} {entry.lastName}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                        {ageLabelForPerson(entry)}
+                        {entry.genderName ? ` · ${entry.genderName}` : ''}
+                      </Typography>
+                    </Box>
+                    <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', flexShrink: 0 }}>
+                      <Chip
+                        label={attended ? 'Presente' : 'Falta'}
+                        size="small"
+                        sx={{
+                          fontWeight: 700,
+                          bgcolor: attended ? 'success.main' : 'action.disabledBackground',
+                          color: attended ? 'common.white' : 'text.secondary',
+                        }}
+                      />
+                      <Chip label={entry.code} size="small" sx={{ fontWeight: 700 }} />
+                    </Stack>
+                  </Stack>
+                )
+              })}
+            </Stack>
+          )}
+        </Box>
       )}
 
       <Grid container spacing={3}>
